@@ -10,9 +10,95 @@
     <script src="https://cdn.jsdelivr.net/npm/papaparse@5.5.3/papaparse.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.4/build/qrcode.min.js"></script>
 
-    <style>
-        ...
-    </style>
+<style>
+
+body{
+    margin:0;
+    font-family:Arial,sans-serif;
+    background:#f2f2f7;
+}
+
+header{
+    background:#0A84FF;
+    color:white;
+    padding:18px;
+    font-size:34px;
+    font-weight:bold;
+}
+
+header div{
+    font-size:18px;
+    font-weight:normal;
+    margin-top:6px;
+}
+
+main{
+    max-width:1100px;
+    margin:auto;
+    padding:18px;
+}
+
+.box{
+    background:white;
+    border-radius:18px;
+    padding:18px;
+    margin-bottom:18px;
+    box-shadow:0 2px 8px rgba(0,0,0,.08);
+}
+
+button{
+    width:100%;
+    padding:18px;
+    font-size:24px;
+    border:none;
+    border-radius:14px;
+    background:#e8e8ed;
+    cursor:pointer;
+}
+
+button:hover{
+    background:#dcdce1;
+}
+
+.scroll{
+    overflow:auto;
+    max-height:500px;
+}
+
+table{
+    width:100%;
+    border-collapse:collapse;
+    font-size:18px;
+}
+
+th{
+    background:#efefef;
+    position:sticky;
+    top:0;
+}
+
+th,td{
+    border:1px solid #cccccc;
+    padding:8px;
+    text-align:left;
+    vertical-align:top;
+}
+
+input[type=text]{
+    width:100%;
+    padding:14px;
+    font-size:22px;
+    border:1px solid #cccccc;
+    border-radius:10px;
+    box-sizing:border-box;
+}
+
+canvas{
+    display:block;
+    margin:auto;
+}
+
+</style>
 </head>
 
 <body>
