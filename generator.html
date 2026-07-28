@@ -107,7 +107,7 @@ canvas{
     🎵 HH Musikquiz
 
     <div style="font-size:18px;font-weight:normal;margin-top:8px;">
-        Version 5
+        Version 6
     </div>
 </header>
 
@@ -351,20 +351,12 @@ function downloadAllQrCodes() {
         );
     });
 
-    exportCanvas.toBlob(blob => {
-        if (!blob) {
-            statusText.textContent =
-                "Fehler beim Erstellen der Bilddatei.";
-            return;
-        }
+    const imageData = exportCanvas.toDataURL("image/png");
 
-        const imageUrl = URL.createObjectURL(blob);
+    statusText.textContent =
+        "Bild geöffnet. Danach Teilen → In Dateien sichern.";
 
-        window.open(imageUrl, "_blank");
-
-        statusText.textContent =
-            "Bild geöffnet. Über Teilen in Dateien sichern.";
-    }, "image/png");
+    window.location.href = imageData;
 }
 
 csvInput.addEventListener("change", () => {
