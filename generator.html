@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<title>Hitster Kartengenerator</title>
+
+<style>
+
+body{
+    font-family:Arial,Helvetica,sans-serif;
+    background:#f2f2f2;
+    margin:0;
+}
+
+header{
+    background:#1565c0;
+    color:white;
+    padding:18px;
+    text-align:center;
+    font-size:28px;
+    font-weight:bold;
+}
+
+main{
+    max-width:900px;
+    margin:auto;
+    padding:20px;
+}
+
+button{
+
+    width:100%;
+    height:55px;
+
+    font-size:20px;
+
+    border:none;
+
+    border-radius:10px;
+
+    background:#1976d2;
+
+    color:white;
+
+}
+
+button:active{
+    background:#0d47a1;
+}
+
+.panel{
+
+    margin-top:20px;
+
+    background:white;
+
+    padding:15px;
+
+    border-radius:10px;
+
+    box-shadow:0 0 8px rgba(0,0,0,0.12);
+
+}
+
+.label{
+
+    font-weight:bold;
+
+    margin-bottom:8px;
+
+}
+
+#workspace{
+
+    margin-top:20px;
+
+    min-height:350px;
+
+    background:white;
+
+    border-radius:10px;
+
+    box-shadow:0 0 8px rgba(0,0,0,0.12);
+
+    padding:20px;
+
+}
+
+footer{
+
+    margin:40px;
+
+    text-align:center;
+
+    color:#777;
+
+}
+
+</style>
+
+</head>
+
+<body>
+
+<header>
+
+🎵 Hitster Kartengenerator
+
+</header>
+
+<main>
+
+<button>
+
+CSV auswählen
+
+</button>
+
+<div class="panel">
+
+<div class="label">
+
+Datei
+
+</div>
+
+<div id="filename">
+
+Noch keine Datei gewählt.
+
+</div>
+
+</div>
+
+<div class="panel">
+
+<div class="label">
+
+Status
+
+</div>
+
+<div id="status">
+
+Bereit.
+
+</div>
+
+</div>
+
+<div id="workspace">
+
+Hier erscheinen später die importierten Karten.
+
+</div>
+
+</main>
+
+<footer>
+
+Version 0.1<br>
+
+© 2026 Harald Hanke
+
+</footer>
+
+</body>
+
+</html>
