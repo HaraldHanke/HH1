@@ -2,6 +2,7 @@
 <html lang="de"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Hitster Generator V1.0-alpha</title>
 <script src="https://cdn.jsdelivr.net/npm/papaparse@5.5.3/papaparse.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.4/build/qrcode.min.js"></script>
 <style>
 body{margin:0;font-family:Arial,sans-serif;background:#f2f2f7}header{background:#0A84FF;color:#fff;padding:16px;font-size:26px}
 main{max-width:1000px;margin:auto;padding:16px}.box{background:#fff;padding:16px;border-radius:12px;margin-bottom:16px}
@@ -55,9 +56,50 @@ if(!/^[0-9]{4}$/.test((e.Jahr||"").trim()))
 });
 
 missing.textContent=m;errors.textContent=err;status.textContent="CSV eingelesen";
-let h=Object.keys(d[0]||{});tbl.innerHTML="";let tr=document.createElement("tr");
+let h=Object.keys(d[0]||{});
+h.push("QR");
+tbl.innerHTML="";let tr=document.createElement("tr");
 h.forEach(c=>{let th=document.createElement("th");th.textContent=c;tr.appendChild(th)});tbl.appendChild(tr);
-d.forEach(r=>{let tr=document.createElement("tr");h.forEach(c=>{let td=document.createElement("td");td.textContent=r[c]||"";tr.appendChild(td)});tbl.appendChild(tr);});};
+d.forEach(r=>{
+
+let tr=document.createElement("tr");
+
+h.forEach(c=>{
+
+let td=document.createElement("td");
+
+if(c==="QR"){
+
+let canvas=document.createElement("canvas");
+
+QRCode.toCanvas(
+canvas,
+JSON.stringify({
+v:1,
+id:r.ID,
+artist:r.Interpret,
+title:r.Titel,
+year:r.Jahr
+}),
+{width:80},
+function(){}
+);
+
+td.appendChild(canvas);
+
+}else{
+
+td.textContent=r[c]||"";
+
+}
+
+tr.appendChild(td);
+
+});
+
+tbl.appendChild(tr);
+
+});
 r.readAsText(csv.files[0],"UTF-8");}
 search.oninput=()=>{
 const t=search.value.toLowerCase();
