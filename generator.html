@@ -1,115 +1,17 @@
-<!DOCTYPE html>
-<html lang="de">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-
-<title>Hitster Kartengenerator</title>
-
-<style>
-
-body{
-    margin:0;
-    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;
-    background:#f2f2f7;
-}
-
-header{
-    background:#0A84FF;
-    color:white;
-    text-align:center;
-    padding:18px;
-    font-size:28px;
-    font-weight:bold;
-}
-
-main{
-    max-width:900px;
-    margin:auto;
-    padding:20px;
-}
-
-.box{
-    background:white;
-    border-radius:14px;
-    padding:18px;
-    margin-bottom:18px;
-    box-shadow:0 2px 8px rgba(0,0,0,.08);
-}
-
-.button{
-    width:100%;
-    padding:16px;
-    border:none;
-    border-radius:12px;
-    background:#0A84FF;
-    color:white;
-    font-size:20px;
-}
-
-.status{
-    color:#0A7A2F;
-    font-weight:bold;
-}
-
-.workspace{
-    height:350px;
-    color:#888;
-}
-
-footer{
-    text-align:center;
-    color:#666;
-    padding:30px;
-    font-size:14px;
-}
-
-</style>
-</head>
-
-<body>
-
-<header>
-🎵 Hitster Kartengenerator
-</header>
-
-<main>
-
 <div class="box">
 
-<button class="button">
-CSV auswählen
+<input
+    type="file"
+    id="csvFile"
+    accept=".csv"
+    hidden>
+
+<button
+    class="button"
+    onclick="document.getElementById('csvFile').click();">
+
+📂 CSV-Datei auswählen
+
 </button>
 
 </div>
-
-<div class="box">
-
-<b>Status</b>
-
-<br><br>
-
-<span class="status">
-
-Bereit.
-
-</span>
-
-</div>
-
-<div class="box workspace">
-
-Hier erscheinen später die importierten Karten.
-
-</div>
-
-</main>
-
-<footer>
-
-Version 0.1
-
-</footer>
-
-</body>
-</html>
