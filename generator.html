@@ -166,135 +166,218 @@ canvas{
 </main>
 
 <script>
-const A="ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
-let data=[];
+const ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
 
-function id(){
-    let s="FILM-";
-    for(let i=0;i<6;i++)
-        s+=A[Math.floor(Math.random()*A.length)];
-    return s;
+const csvInput = document.getElementById("csv");
+const fileName = document.getElementById("file");
+const statusText = document.getElementById("status");
+const cardsCount = document.getElementById("cards");
+const missingCount = document.getElementById("missing");
+const errorsCount = document.getElementById("errors");
+const table = document.getElementById("tbl");
+const searchInput = document.getElementById("search");
+
+let data = [];
+
+function createId(existingIds) {
+    let newId;
+
+    do {
+        const values = new Uint32Array(6);
+        crypto.getRandomValues(values);
+
+        newId = "FILM-";
+
+        for (let i = 0; i < 6; i++) {
+            newId += ALPHABET[values[i] % ALPHABET.length];
+        }
+    } while (existingIds.has(newId));
+
+    existingIds.add(newId);
+    return newId;
 }
 
-csv.onchange=()=>{
+function createQrCode(canvas, qrData) {
+    return new Promise((resolve, reject) => {
+        QRCode.toCanvas(
+            canvas,
+            JSON.stringify(qrData),
+            {
+                width: 100,
+                margin: 1,
+                errorCorrectionLevel: "M"
+            },
+            error => {
+                if (error) {
+                    reject(error);
+                } else {
+                    resolve();
+                }
+            }
+        );
+    });
+}
 
-    if(!csv.files.length) return;
+async function showTable(rows) {
+    table.innerHTML = "";
 
-    file.textContent=csv.files[0].name;
+    const columns = Object.keys(rows[0] || {});
+    columns.push("QR");
 
-    let r=new FileReader();
+    const headerRow = document.createElement("tr");
 
-    r.onload=()=>{
+    columns.forEach(column => {
+        const th = document.createElement("th");
+        th.textContent = column;
+        headerRow.appendChild(th);
+    });
 
-        let x=Papa.parse(r.result,{
-            header:true,
-            skipEmptyLines:true
-        });
+    table.appendChild(headerRow);
 
-        let d=x.data;
-        data=d;
+    for (const row of rows) {
+        const tableRow = document.createElement("tr");
 
-        cards.textContent=d.length;
+        for (const column of columns) {
+            const td = document.createElement("td");
 
-        let m=0;
-        let err=0;
+            if (column === "QR") {
+                const canvas = document.createElement("canvas");
 
-        d.forEach(e=>{
+                const qrData = {
+                    v: 1,
+                    id: row.ID || "",
+                    artist: row.Interpret || "",
+                    title: row.Titel || "",
+                    version: row.Version || "",
+                    year: row.Jahr || ""
+                };
 
-            if(!e.ID){
-                e.ID=id();
-                m++;
+                try {
+                    await createQrCode(canvas, qrData);
+                    td.appendChild(canvas);
+                } catch (error) {
+                    td.textContent = "QR-Fehler";
+                    console.error(error);
+                }
+            } else {
+                td.textContent = row[column] || "";
             }
 
-            if(!e.Film) err++;
-            if(!e.Interpret) err++;
-            if(!e.Titel) err++;
+            tableRow.appendChild(td);
+        }
 
-            if(!/^[0-9]{4}$/.test((e.Jahr||"").trim()))
-                err++;
+        table.appendChild(tableRow);
+    }
+}
 
-        });
-
-        missing.textContent=m;
-        errors.textContent=err;
-        status.textContent="CSV eingelesen";
-
-        let h=Object.keys(d[0]||{});
-        h.push("QR");
-
-        tbl.innerHTML="";
-
-        let head=document.createElement("tr");
-
-        h.forEach(c=>{
-            let th=document.createElement("th");
-            th.textContent=c;
-            head.appendChild(th);
-        });
-
-        tbl.appendChild(head);
-
-        d.forEach(r=>{
-
-            let tr=document.createElement("tr");
-
-            h.forEach(c=>{
-
-                let td=document.createElement("td");
-
-                if(c==="QR"){
-
-                    let canvas=document.createElement("canvas");
-
-                    QRCode.toCanvas(
-                        canvas,
-                        JSON.stringify({
-                            v:1,
-                            id:r.ID,
-                            artist:r.Interpret,
-                            title:r.Titel,
-                            year:r.Jahr
-                        }),
-                        {width:80}
-                    );
-
-                    td.appendChild(canvas);
-
-                }else{
-
-                    td.textContent=r[c]||"";
-
-                }
-
-                tr.appendChild(td);
-
-            });
-
-            tbl.appendChild(tr);
-
-        });
-
-    };
-
-    r.readAsText(csv.files[0],"UTF-8");
-
-};
-
-search.oninput=()=>{
-
-    const t=search.value.toLowerCase();
-    const rows=tbl.getElementsByTagName("tr");
-
-    for(let i=1;i<rows.length;i++){
-
-        const txt=rows[i].innerText.toLowerCase();
-
-        rows[i].style.display=
-            txt.includes(t) ? "" : "none";
-
+csvInput.addEventListener("change", () => {
+    if (!csvInput.files.length) {
+        return;
     }
 
-};
+    if (typeof Papa === "undefined") {
+        statusText.textContent = "Fehler: CSV-Bibliothek fehlt.";
+        return;
+    }
+
+    if (typeof QRCode === "undefined") {
+        statusText.textContent = "Fehler: QR-Code-Bibliothek fehlt.";
+        return;
+    }
+
+    const selectedFile = csvInput.files[0];
+    fileName.textContent = selectedFile.name;
+    statusText.textContent = "CSV wird eingelesen …";
+
+    const reader = new FileReader();
+
+    reader.onload = async () => {
+        const result = Papa.parse(reader.result, {
+            header: true,
+            skipEmptyLines: true,
+            transformHeader: header => header.trim()
+        });
+
+        if (result.errors.length > 0) {
+            console.error(result.errors);
+        }
+
+        data = result.data;
+
+        let missingIds = 0;
+        let validationErrors = 0;
+
+        const existingIds = new Set();
+
+        data.forEach(row => {
+            if (row.ID && row.ID.trim()) {
+                const currentId = row.ID.trim();
+
+                if (existingIds.has(currentId)) {
+                    validationErrors++;
+                    row.ID = createId(existingIds);
+                    missingIds++;
+                } else {
+                    row.ID = currentId;
+                    existingIds.add(currentId);
+                }
+            } else {
+                row.ID = createId(existingIds);
+                missingIds++;
+            }
+
+            if (!String(row.Film || "").trim()) {
+                validationErrors++;
+            }
+
+            if (!String(row.Interpret || "").trim()) {
+                validationErrors++;
+            }
+
+            if (!String(row.Titel || "").trim()) {
+                validationErrors++;
+            }
+
+            if (!/^[0-9]{4}$/.test(String(row.Jahr || "").trim())) {
+                validationErrors++;
+            }
+        });
+
+        cardsCount.textContent = data.length;
+        missingCount.textContent = missingIds;
+        errorsCount.textContent =
+            validationErrors + result.errors.length;
+
+        statusText.textContent = "QR-Codes werden erzeugt …";
+
+        await showTable(data);
+
+        statusText.textContent = "CSV und QR-Codes erfolgreich erzeugt.";
+    };
+
+    reader.onerror = () => {
+        statusText.textContent = "Fehler beim Lesen der CSV-Datei.";
+    };
+
+    reader.readAsText(selectedFile, "UTF-8");
+});
+
+if (searchInput) {
+    searchInput.addEventListener("input", () => {
+        const searchTerm = searchInput.value
+            .trim()
+            .toLowerCase();
+
+        const rows = table.getElementsByTagName("tr");
+
+        for (let i = 1; i < rows.length; i++) {
+            const rowText = rows[i].innerText.toLowerCase();
+
+            rows[i].style.display =
+                rowText.includes(searchTerm) ? "" : "none";
+        }
+    });
+}
 </script>
 
 </body></html>
