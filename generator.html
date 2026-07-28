@@ -107,7 +107,7 @@ canvas{
     🎵 HH Musikquiz
 
     <div style="font-size:18px;font-weight:normal;margin-top:8px;">
-        Version 3
+        Version 4
     </div>
 </header>
 
@@ -270,11 +270,12 @@ async function showTable(rows) {
     downloadQrButton.disabled = rows.length === 0;
 }
 
-function downloadAllQrCodes() {
+async function downloadAllQrCodes() {
     const qrCanvases = table.querySelectorAll("canvas");
 
     if (!qrCanvases.length) {
-        statusText.textContent = "Keine QR-Codes zum Speichern vorhanden.";
+        statusText.textContent =
+            "Keine QR-Codes zum Speichern vorhanden.";
         return;
     }
 
@@ -284,6 +285,7 @@ function downloadAllQrCodes() {
     const rows = Math.ceil(data.length / columns);
 
     const exportCanvas = document.createElement("canvas");
+
     exportCanvas.width = columns * cardWidth;
     exportCanvas.height = rows * cardHeight;
 
@@ -349,16 +351,65 @@ function downloadAllQrCodes() {
         );
     });
 
-    const link = document.createElement("a");
+    exportCanvas.toBlob(
+        async blob => {
+            if (!blob) {
+                statusText.textContent =
+                    "Fehler beim Erstellen der Bilddatei.";
+                return;
+            }
 
-    link.download = "HH-Musikquiz-QR-Codes.png";
-    link.href = exportCanvas.toDataURL("image/png");
-    link.click();
+            const exportFile = new File(
+                [blob],
+                "HH-Musikquiz-QR-Codes.png",
+                { type: "image/png" }
+            );
 
-    statusText.textContent =
-        "QR-Code-Bild wurde erstellt.";
+            if (
+                navigator.share &&
+                navigator.canShare &&
+                navigator.canShare({
+                    files: [exportFile]
+                })
+            ) {
+                try {
+                    await navigator.share({
+                        files: [exportFile],
+                        title: "HH Musikquiz QR-Codes"
+                    });
+
+                    statusText.textContent =
+                        "QR-Code-Bild wurde übergeben.";
+                } catch (error) {
+                    if (error.name !== "AbortError") {
+                        statusText.textContent =
+                            "Speichern wurde nicht ausgeführt.";
+                    }
+                }
+
+                return;
+            }
+
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement("a");
+
+            link.href = url;
+            link.download = "HH-Musikquiz-QR-Codes.png";
+
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+
+            setTimeout(() => {
+                URL.revokeObjectURL(url);
+            }, 1000);
+
+            statusText.textContent =
+                "QR-Code-Bild wurde erstellt.";
+        },
+        "image/png"
+    );
 }
-
 csvInput.addEventListener("change", () => {
     if (!csvInput.files.length) {
         return;
