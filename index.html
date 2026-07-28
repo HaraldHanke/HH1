@@ -2,32 +2,82 @@
 <html lang="de">
 <head>
 <meta charset="UTF-8">
-<title>Hitster Test</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Hitster QR</title>
+
 <style>
+
 body{
+    margin:0;
     font-family:Arial,sans-serif;
+    background:#f5f5f5;
     text-align:center;
-    margin-top:80px;
-    background:#f4f4f4;
 }
+
 h1{
-    color:#0b5;
+    margin-top:60px;
+    font-size:42px;
 }
+
 button{
-    font-size:20px;
-    padding:12px 24px;
+
+    width:260px;
+    height:60px;
+
+    margin:20px;
+
+    font-size:22px;
+
+    border:none;
+
+    border-radius:12px;
+
+    background:#0066cc;
+
+    color:white;
+
 }
+
+button:hover{
+    background:#0050a0;
+}
+
+.footer{
+
+    margin-top:80px;
+
+    color:#666;
+
+    font-size:14px;
+
+}
+
 </style>
+
 </head>
+
 <body>
 
-<h1>🎵 Hitster läuft!</h1>
+<h1>🎵 Hitster QR</h1>
 
-<p>GitHub Pages funktioniert.</p>
-
-<button onclick="alert('Hallo Harald!')">
-Test
+<button onclick="location.href='generator.html'">
+Kartengenerator
 </button>
 
+<br>
+
+<button onclick="location.href='player.html'">
+Player
+</button>
+
+<div class="footer">
+
+Version 0.0.1<br>
+
+© 2026 Harald Hanke
+
+</div>
+
 </body>
+
 </html>
