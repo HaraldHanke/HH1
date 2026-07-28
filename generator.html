@@ -270,7 +270,7 @@ async function showTable(rows) {
     downloadQrButton.disabled = rows.length === 0;
 }
 
-async function downloadAllQrCodes() {
+function downloadAllQrCodes() {
     const qrCanvases = table.querySelectorAll("canvas");
 
     if (!qrCanvases.length) {
@@ -351,65 +351,22 @@ async function downloadAllQrCodes() {
         );
     });
 
-    exportCanvas.toBlob(
-        async blob => {
-            if (!blob) {
-                statusText.textContent =
-                    "Fehler beim Erstellen der Bilddatei.";
-                return;
-            }
-
-            const exportFile = new File(
-                [blob],
-                "HH-Musikquiz-QR-Codes.png",
-                { type: "image/png" }
-            );
-
-            if (
-                navigator.share &&
-                navigator.canShare &&
-                navigator.canShare({
-                    files: [exportFile]
-                })
-            ) {
-                try {
-                    await navigator.share({
-                        files: [exportFile],
-                        title: "HH Musikquiz QR-Codes"
-                    });
-
-                    statusText.textContent =
-                        "QR-Code-Bild wurde übergeben.";
-                } catch (error) {
-                    if (error.name !== "AbortError") {
-                        statusText.textContent =
-                            "Speichern wurde nicht ausgeführt.";
-                    }
-                }
-
-                return;
-            }
-
-            const url = URL.createObjectURL(blob);
-            const link = document.createElement("a");
-
-            link.href = url;
-            link.download = "HH-Musikquiz-QR-Codes.png";
-
-            document.body.appendChild(link);
-            link.click();
-            link.remove();
-
-            setTimeout(() => {
-                URL.revokeObjectURL(url);
-            }, 1000);
-
+    exportCanvas.toBlob(blob => {
+        if (!blob) {
             statusText.textContent =
-                "QR-Code-Bild wurde erstellt.";
-        },
-        "image/png"
-    );
+                "Fehler beim Erstellen der Bilddatei.";
+            return;
+        }
+
+        const imageUrl = URL.createObjectURL(blob);
+
+        window.open(imageUrl, "_blank");
+
+        statusText.textContent =
+            "Bild geöffnet. Über Teilen in Dateien sichern.";
+    }, "image/png");
 }
+
 csvInput.addEventListener("change", () => {
     if (!csvInput.files.length) {
         return;
