@@ -163,6 +163,12 @@ canvas{
     <table id="tbl"></table>
 </div>
 
+<div class="box">
+    <button id="downloadQr" disabled>
+        QR-Codes als Bild speichern
+    </button>
+</div>
+
 </main>
 
 <script>
@@ -176,6 +182,7 @@ const missingCount = document.getElementById("missing");
 const errorsCount = document.getElementById("errors");
 const table = document.getElementById("tbl");
 const searchInput = document.getElementById("search");
+const downloadQrButton = document.getElementById("downloadQr");
 
 let data = [];
 
@@ -259,6 +266,97 @@ async function showTable(rows) {
 
         table.appendChild(tableRow);
     }
+    
+    downloadQrButton.disabled = rows.length === 0;
+}
+
+function downloadAllQrCodes() {
+    const qrCanvases = table.querySelectorAll("canvas");
+
+    if (!qrCanvases.length) {
+        statusText.textContent = "Keine QR-Codes zum Speichern vorhanden.";
+        return;
+    }
+
+    const columns = 2;
+    const cardWidth = 420;
+    const cardHeight = 180;
+    const rows = Math.ceil(data.length / columns);
+
+    const exportCanvas = document.createElement("canvas");
+    exportCanvas.width = columns * cardWidth;
+    exportCanvas.height = rows * cardHeight;
+
+    const context = exportCanvas.getContext("2d");
+
+    context.fillStyle = "#ffffff";
+    context.fillRect(
+        0,
+        0,
+        exportCanvas.width,
+        exportCanvas.height
+    );
+
+    context.fillStyle = "#000000";
+    context.font = "22px Arial";
+    context.textBaseline = "top";
+
+    data.forEach((card, index) => {
+        const column = index % columns;
+        const row = Math.floor(index / columns);
+
+        const x = column * cardWidth;
+        const y = row * cardHeight;
+
+        context.strokeStyle = "#cccccc";
+        context.strokeRect(
+            x + 10,
+            y + 10,
+            cardWidth - 20,
+            cardHeight - 20
+        );
+
+        context.drawImage(
+            qrCanvases[index],
+            x + 25,
+            y + 25,
+            120,
+            120
+        );
+
+        context.fillText(
+            card.ID || "",
+            x + 165,
+            y + 30
+        );
+
+        context.fillText(
+            card.Film || "",
+            x + 165,
+            y + 65
+        );
+
+        context.fillText(
+            card.Interpret || "",
+            x + 165,
+            y + 100
+        );
+
+        context.fillText(
+            card.Titel || "",
+            x + 165,
+            y + 135
+        );
+    });
+
+    const link = document.createElement("a");
+
+    link.download = "HH-Musikquiz-QR-Codes.png";
+    link.href = exportCanvas.toDataURL("image/png");
+    link.click();
+
+    statusText.textContent =
+        "QR-Code-Bild wurde erstellt.";
 }
 
 csvInput.addEventListener("change", () => {
@@ -369,6 +467,12 @@ if (searchInput) {
         }
     });
 }
+
+downloadQrButton.addEventListener(
+    "click",
+    downloadAllQrCodes
+);
+
 </script>
 
 </body></html>
