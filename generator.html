@@ -1,113 +1,213 @@
 <!DOCTYPE html>
-<html lang="de"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Hitster Generator V1.0-alpha</title>
-<script src="https://cdn.jsdelivr.net/npm/papaparse@5.5.3/papaparse.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.4/build/qrcode.min.js"></script>
-<style>
-body{margin:0;font-family:Arial,sans-serif;background:#f2f2f7}header{background:#0A84FF;color:#fff;padding:16px;font-size:26px}
-main{max-width:1000px;margin:auto;padding:16px}.box{background:#fff;padding:16px;border-radius:12px;margin-bottom:16px}
-button{width:100%;padding:16px;font-size:20px}.scroll{overflow:auto;max-height:420px}table{width:100%;border-collapse:collapse}
-th,td{border:1px solid #ccc;padding:6px}th{background:#eee}
-</style></head><body>
-<header>🎵 Hitster Kartengenerator V1.0-alpha</header>
+<html lang="de">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+
+    <title>Hitster Generator V1.0-alpha</title>
+
+    <script src="https://cdn.jsdelivr.net/npm/papaparse@5.5.3/papaparse.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.4/build/qrcode.min.js"></script>
+
+    <style>
+        ...
+    </style>
+</head>
+
+<body>
+
+<header>
+    🎵 Hitster Kartengenerator
+    <div style="font-size:14px; font-weight:normal; margin-top:4px;">
+        Version 1.1-alpha • Entwicklung
+    </div>
+</header>
+
 <main>
-<div class="box"><input id="csv" type="file" accept=".csv" hidden><button onclick="csv.click()">📂 CSV-Datei auswählen</button></div>
+
 <div class="box">
-<b>Datei:</b> <span id="file">Keine</span><br><br>
+    <input id="csv" type="file" accept=".csv" hidden>
 
-<b>Status:</b> <span id="status">Bereit.</span><br><br>
-
-<b>Karten:</b> <span id="cards">0</span><br>
-
-<b>Fehlende IDs:</b> <span id="missing">0</span><br>
-
-<b>Fehler:</b> <span id="errors">0</span>
+    <button onclick="csv.click()">
+        📂 CSV-Datei auswählen
+    </button>
 </div>
+
 <div class="box">
-<input id="search" type="text" placeholder="🔍 Film, Interpret oder Titel suchen..."
-style="width:100%;padding:12px;font-size:18px;box-sizing:border-box;">
+
+    <b>Datei:</b>
+    <span id="file">Keine</span>
+
+    <br><br>
+
+    <b>Status:</b>
+    <span id="status">Bereit.</span>
+
+    <br><br>
+
+    <b>Karten:</b>
+    <span id="cards">0</span>
+
+    <br>
+
+    <b>Fehlende IDs:</b>
+    <span id="missing">0</span>
+
+    <br>
+
+    <b>Fehler:</b>
+    <span id="errors">0</span>
+
+</div>
+
+<div class="box">
+
+    <input
+        id="search"
+        type="text"
+        placeholder="🔍 Film, Interpret oder Titel suchen..."
+        style="width:100%; padding:12px; font-size:18px; box-sizing:border-box;"
+    >
+
 </div>
 
 <div class="box scroll">
-<table id="tbl"></table>
+    <table id="tbl"></table>
 </div>
+
 </main>
+
 <script>
 const A="ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
 let data=[];
-function id(){let s="FILM-";for(let i=0;i<6;i++)s+=A[Math.floor(Math.random()*A.length)];return s;}
-csv.onchange=()=>{if(!csv.files.length)return;file.textContent=csv.files[0].name;let r=new FileReader();
-r.onload=()=>{let x=Papa.parse(r.result,{header:true,skipEmptyLines:true});let d=x.data;
-data=d;;cards.textContent=d.length;let m=0;let err=0;
-d.forEach(e=>{
 
-if(!e.ID){
-    e.ID=id();
-    m++;
+function id(){
+    let s="FILM-";
+    for(let i=0;i<6;i++)
+        s+=A[Math.floor(Math.random()*A.length)];
+    return s;
 }
 
-if(!e.Film) err++;
-if(!e.Interpret) err++;
-if(!e.Titel) err++;
+csv.onchange=()=>{
 
-if(!/^[0-9]{4}$/.test((e.Jahr||"").trim()))
-    err++;
+    if(!csv.files.length) return;
 
-});
+    file.textContent=csv.files[0].name;
 
-missing.textContent=m;errors.textContent=err;status.textContent="CSV eingelesen";
-let h=Object.keys(d[0]||{});
-h.push("QR");
-tbl.innerHTML="";let tr=document.createElement("tr");
-h.forEach(c=>{let th=document.createElement("th");th.textContent=c;tr.appendChild(th)});tbl.appendChild(tr);
-d.forEach(r=>{
+    let r=new FileReader();
 
-let tr=document.createElement("tr");
+    r.onload=()=>{
 
-h.forEach(c=>{
+        let x=Papa.parse(r.result,{
+            header:true,
+            skipEmptyLines:true
+        });
 
-let td=document.createElement("td");
+        let d=x.data;
+        data=d;
 
-if(c==="QR"){
+        cards.textContent=d.length;
 
-let canvas=document.createElement("canvas");
+        let m=0;
+        let err=0;
 
-QRCode.toCanvas(
-canvas,
-JSON.stringify({
-v:1,
-id:r.ID,
-artist:r.Interpret,
-title:r.Titel,
-year:r.Jahr
-}),
-{width:80},
-function(){}
-);
+        d.forEach(e=>{
 
-td.appendChild(canvas);
+            if(!e.ID){
+                e.ID=id();
+                m++;
+            }
 
-}else{
+            if(!e.Film) err++;
+            if(!e.Interpret) err++;
+            if(!e.Titel) err++;
 
-td.textContent=r[c]||"";
+            if(!/^[0-9]{4}$/.test((e.Jahr||"").trim()))
+                err++;
 
-}
+        });
 
-tr.appendChild(td);
+        missing.textContent=m;
+        errors.textContent=err;
+        status.textContent="CSV eingelesen";
 
-});
+        let h=Object.keys(d[0]||{});
+        h.push("QR");
 
-tbl.appendChild(tr);
+        tbl.innerHTML="";
 
-});
-r.readAsText(csv.files[0],"UTF-8");}
-search.oninput=()=>{
-const t=search.value.toLowerCase();
-const rows=tbl.getElementsByTagName("tr");
+        let head=document.createElement("tr");
 
-for(let i=1;i<rows.length;i++){
-const txt=rows[i].innerText.toLowerCase();
-rows[i].style.display=txt.includes(t)?"":"none";
-}
+        h.forEach(c=>{
+            let th=document.createElement("th");
+            th.textContent=c;
+            head.appendChild(th);
+        });
+
+        tbl.appendChild(head);
+
+        d.forEach(r=>{
+
+            let tr=document.createElement("tr");
+
+            h.forEach(c=>{
+
+                let td=document.createElement("td");
+
+                if(c==="QR"){
+
+                    let canvas=document.createElement("canvas");
+
+                    QRCode.toCanvas(
+                        canvas,
+                        JSON.stringify({
+                            v:1,
+                            id:r.ID,
+                            artist:r.Interpret,
+                            title:r.Titel,
+                            year:r.Jahr
+                        }),
+                        {width:80}
+                    );
+
+                    td.appendChild(canvas);
+
+                }else{
+
+                    td.textContent=r[c]||"";
+
+                }
+
+                tr.appendChild(td);
+
+            });
+
+            tbl.appendChild(tr);
+
+        });
+
+    };
+
+    r.readAsText(csv.files[0],"UTF-8");
+
 };
-</script></body></html>
+
+search.oninput=()=>{
+
+    const t=search.value.toLowerCase();
+    const rows=tbl.getElementsByTagName("tr");
+
+    for(let i=1;i<rows.length;i++){
+
+        const txt=rows[i].innerText.toLowerCase();
+
+        rows[i].style.display=
+            txt.includes(t) ? "" : "none";
+
+    }
+
+};
+</script>
+
+</body></html>
