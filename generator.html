@@ -1,3 +1,82 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<title>Hitster Kartengenerator</title>
+
+<style>
+body{
+    margin:0;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;
+    background:#f2f2f7;
+}
+
+header{
+    background:#0A84FF;
+    color:white;
+    padding:16px;
+    text-align:center;
+    font-size:26px;
+    font-weight:bold;
+}
+
+main{
+    max-width:900px;
+    margin:auto;
+    padding:16px;
+}
+
+.box{
+    background:white;
+    border-radius:12px;
+    padding:16px;
+    margin-bottom:16px;
+    box-shadow:0 2px 6px rgba(0,0,0,.08);
+}
+
+.button{
+    width:100%;
+    padding:16px;
+    border:none;
+    border-radius:10px;
+    background:#0A84FF;
+    color:white;
+    font-size:20px;
+}
+
+.button:active{
+    background:#0060c8;
+}
+
+.label{
+    font-weight:bold;
+    margin-bottom:8px;
+}
+
+.workspace{
+    min-height:300px;
+    color:#888;
+}
+
+footer{
+    text-align:center;
+    color:#666;
+    padding:20px;
+}
+</style>
+
+</head>
+
+<body>
+
+<header>
+🎵 Hitster Kartengenerator <span style="float:right;font-size:16px;">V0.2</span>
+</header>
+
+<main>
+
 <div class="box">
 
 <input
@@ -15,3 +94,63 @@
 </button>
 
 </div>
+
+<div class="box">
+
+<div class="label">CSV-Datei</div>
+
+<div id="filename">
+Keine Datei ausgewählt.
+</div>
+
+<br>
+
+<div class="label">Arbeitsstatus</div>
+
+<div id="status">
+Bereit.
+</div>
+
+<br>
+
+<div class="label">Karten</div>
+
+<div id="count">
+0
+</div>
+
+</div>
+
+<div class="box workspace">
+
+Hier erscheinen später die importierten Karten.
+
+</div>
+
+</main>
+
+<footer>
+
+© 2026 Harald Hanke
+
+</footer>
+
+<script>
+
+const csvFile = document.getElementById("csvFile");
+const filename = document.getElementById("filename");
+const status = document.getElementById("status");
+
+csvFile.addEventListener("change", () => {
+
+    if (csvFile.files.length === 0) return;
+
+    filename.textContent = csvFile.files[0].name;
+    status.textContent = "Datei ausgewählt.";
+
+});
+
+</script>
+
+</body>
+</html>
