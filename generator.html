@@ -8,7 +8,7 @@
     <title>Hitster Generator V1.0-alpha</title>
 
     <script src="https://cdn.jsdelivr.net/npm/papaparse@5.5.3/papaparse.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.4/build/qrcode.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/qrious@4.0.2/dist/qrious.min.js"></script>
 
 <style>
 
@@ -198,24 +198,15 @@ function createId(existingIds) {
 }
 
 function createQrCode(canvas, qrData) {
-    return new Promise((resolve, reject) => {
-        QRCode.toCanvas(
-            canvas,
-            JSON.stringify(qrData),
-            {
-                width: 100,
-                margin: 1,
-                errorCorrectionLevel: "M"
-            },
-            error => {
-                if (error) {
-                    reject(error);
-                } else {
-                    resolve();
-                }
-            }
-        );
+    new QRious({
+        element: canvas,
+        value: JSON.stringify(qrData),
+        size: 100,
+        level: "M",
+        padding: 4
     });
+
+    return Promise.resolve();
 }
 
 async function showTable(rows) {
@@ -280,10 +271,10 @@ csvInput.addEventListener("change", () => {
         return;
     }
 
-    if (typeof QRCode === "undefined") {
-        statusText.textContent = "Fehler: QR-Code-Bibliothek fehlt.";
-        return;
-    }
+    if (typeof QRious === "undefined") {
+    statusText.textContent = "Fehler: QR-Code-Bibliothek fehlt.";
+    return;
+}
 
     const selectedFile = csvInput.files[0];
     fileName.textContent = selectedFile.name;
