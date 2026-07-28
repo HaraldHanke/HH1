@@ -11,7 +11,17 @@ th,td{border:1px solid #ccc;padding:6px}th{background:#eee}
 <header>🎵 Hitster Kartengenerator V1.0-alpha</header>
 <main>
 <div class="box"><input id="csv" type="file" accept=".csv" hidden><button onclick="csv.click()">📂 CSV-Datei auswählen</button></div>
-<div class="box"><b>Datei:</b> <span id="file">Keine</span><br><br><b>Status:</b> <span id="status">Bereit.</span><br><br><b>Karten:</b> <span id="cards">0</span> | <b>Fehlende IDs:</b> <span id="missing">0</span></div>
+<div class="box">
+<b>Datei:</b> <span id="file">Keine</span><br><br>
+
+<b>Status:</b> <span id="status">Bereit.</span><br><br>
+
+<b>Karten:</b> <span id="cards">0</span><br>
+
+<b>Fehlende IDs:</b> <span id="missing">0</span><br>
+
+<b>Fehler:</b> <span id="errors">0</span>
+</div>
 <div class="box">
 <input id="search" type="text" placeholder="🔍 Film, Interpret oder Titel suchen..."
 style="width:100%;padding:12px;font-size:18px;box-sizing:border-box;">
@@ -27,8 +37,24 @@ let data=[];
 function id(){let s="FILM-";for(let i=0;i<6;i++)s+=A[Math.floor(Math.random()*A.length)];return s;}
 csv.onchange=()=>{if(!csv.files.length)return;file.textContent=csv.files[0].name;let r=new FileReader();
 r.onload=()=>{let x=Papa.parse(r.result,{header:true,skipEmptyLines:true});let d=x.data;
-data=d;;cards.textContent=d.length;let m=0;
-d.forEach(e=>{if(!e.ID){e.ID=id();m++;}});missing.textContent=m;status.textContent="CSV eingelesen";
+data=d;;cards.textContent=d.length;let m=0;let err=0;
+d.forEach(e=>{
+
+if(!e.ID){
+    e.ID=id();
+    m++;
+}
+
+if(!e.Film) err++;
+if(!e.Interpret) err++;
+if(!e.Titel) err++;
+
+if(!/^[0-9]{4}$/.test((e.Jahr||"").trim()))
+    err++;
+
+});
+
+missing.textContent=m;errors.textContent=err;status.textContent="CSV eingelesen";
 let h=Object.keys(d[0]||{});tbl.innerHTML="";let tr=document.createElement("tr");
 h.forEach(c=>{let th=document.createElement("th");th.textContent=c;tr.appendChild(th)});tbl.appendChild(tr);
 d.forEach(r=>{let tr=document.createElement("tr");h.forEach(c=>{let td=document.createElement("td");td.textContent=r[c]||"";tr.appendChild(td)});tbl.appendChild(tr);});};
