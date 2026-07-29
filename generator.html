@@ -273,93 +273,63 @@ async function showTable(rows) {
     downloadQrButton.disabled = rows.length === 0;
 }
 
-function downloadAllQrCodes() {
+async function downloadAllQrCodes() {
+    const { jsPDF } = window.jspdf;
+
+    const pdf = new jsPDF({
+        orientation: "portrait",
+        unit: "mm",
+        format: "a4"
+    });
+
     const qrCanvases = table.querySelectorAll("canvas");
 
     if (!qrCanvases.length) {
-        statusText.textContent =
-            "Keine QR-Codes zum Speichern vorhanden.";
+        statusText.textContent = "Keine QR-Codes vorhanden.";
         return;
     }
 
-    const columns = 2;
-    const cardWidth = 420;
-    const cardHeight = 180;
-    const rows = Math.ceil(data.length / columns);
+    const left = 15;
+    const top = 15;
+    const qrSize = 35;
+    const rowHeight = 48;
 
-    const exportCanvas = document.createElement("canvas");
+    let y = top;
 
-    exportCanvas.width = columns * cardWidth;
-    exportCanvas.height = rows * cardHeight;
+    data.forEach((card, i) => {
 
-    const context = exportCanvas.getContext("2d");
+        if (y + rowHeight > 285) {
+            pdf.addPage();
+            y = top;
+        }
 
-    context.fillStyle = "#ffffff";
-    context.fillRect(
-        0,
-        0,
-        exportCanvas.width,
-        exportCanvas.height
-    );
+        const img = qrCanvases[i].toDataURL("image/png");
 
-    context.fillStyle = "#000000";
-    context.font = "22px Arial";
-    context.textBaseline = "top";
-
-    data.forEach((card, index) => {
-        const column = index % columns;
-        const row = Math.floor(index / columns);
-
-        const x = column * cardWidth;
-        const y = row * cardHeight;
-
-        context.strokeStyle = "#cccccc";
-        context.strokeRect(
-            x + 10,
-            y + 10,
-            cardWidth - 20,
-            cardHeight - 20
+        pdf.addImage(
+            img,
+            "PNG",
+            left,
+            y,
+            qrSize,
+            qrSize
         );
 
-        context.drawImage(
-            qrCanvases[index],
-            x + 25,
-            y + 25,
-            120,
-            120
-        );
+        pdf.setFontSize(9);
 
-        context.fillText(
-            card.ID || "",
-            x + 165,
-            y + 30
-        );
+        pdf.text(card.ID || "", 55, y + 5);
+        pdf.text(card.Film || "", 55, y + 11);
+        pdf.text(card.Interpret || "", 55, y + 17);
+        pdf.text(card.Titel || "", 55, y + 23);
 
-        context.fillText(
-            card.Film || "",
-            x + 165,
-            y + 65
-        );
+        if (card.Jahr)
+            pdf.text(String(card.Jahr), 55, y + 29);
 
-        context.fillText(
-            card.Interpret || "",
-            x + 165,
-            y + 100
-        );
-
-        context.fillText(
-            card.Titel || "",
-            x + 165,
-            y + 135
-        );
+        y += rowHeight;
     });
 
-    const imageData = exportCanvas.toDataURL("image/png");
+    pdf.save("HH-Musikquiz-Karten.pdf");
 
-    statusText.textContent =
-        "Bild geöffnet. Danach Teilen → In Dateien sichern.";
-
-    window.location.href = imageData;
+    statusText.textContent = "PDF wurde erstellt.";
 }
 
 csvInput.addEventListener("change", () => {
