@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+0<!DOCTYPE html>
 <html lang="de">
 
 <head>
@@ -110,7 +110,7 @@ canvas{
     🎵 HH Musikquiz
 
     <div style="font-size:18px;font-weight:normal;margin-top:8px;">
-        Version 7
+        Version 8
     </div>
 </header>
 
@@ -167,8 +167,15 @@ canvas{
 </div>
 
 <div class="box">
-    <button type="button" onclick="downloadAllQrCodes()">
-    PDF mit QR-Codes erstellen
+    <label for="duplexMode">Duplexdruck:</label>
+
+<select id="duplexMode">
+    <option value="long">Lange Kante wenden</option>
+    <option value="short">Kurze Kante wenden</option>
+</select>
+
+<button type="button" onclick="downloadAllQrCodes()">
+    Duplex-PDF erstellen
 </button>
 </div>
 
@@ -273,8 +280,21 @@ async function showTable(rows) {
     downloadQrButton.disabled = rows.length === 0;
 }
 
-async function downloadAllQrCodes() {
+function downloadAllQrCodes() {
     const { jsPDF } = window.jspdf;
+
+    const qrCanvases = Array.from(
+        table.querySelectorAll("canvas")
+    );
+
+    if (!qrCanvases.length) {
+        statusText.textContent =
+            "Keine QR-Codes zum Drucken vorhanden.";
+        return;
+    }
+
+    const duplexMode =
+        document.getElementById("duplexMode").value;
 
     const pdf = new jsPDF({
         orientation: "portrait",
@@ -282,54 +302,296 @@ async function downloadAllQrCodes() {
         format: "a4"
     });
 
-    const qrCanvases = table.querySelectorAll("canvas");
+    const pageWidth = 210;
+    const pageHeight = 297;
 
-    if (!qrCanvases.length) {
-        statusText.textContent = "Keine QR-Codes vorhanden.";
-        return;
-    }
+    const columns = 3;
+    const rows = 4;
+    const cardsPerSheet = columns * rows;
 
-    const left = 15;
-    const top = 15;
-    const qrSize = 35;
-    const rowHeight = 48;
+    const marginLeft = 9;
+    const marginTop = 12;
 
-    let y = top;
+    const cardWidth = 64;
+    const cardHeight = 66;
 
-    data.forEach((card, i) => {
+    const contentWidth = columns * cardWidth;
+    const contentHeight = rows * cardHeight;
 
-        if (y + rowHeight > 285) {
-            pdf.addPage();
-            y = top;
+    const sheetCount =
+        Math.ceil(data.length / cardsPerSheet);
+
+    function getCardPosition(index, isBack) {
+        const position = index % cardsPerSheet;
+
+        let column = position % columns;
+        let row = Math.floor(position / columns);
+
+        if (isBack && duplexMode === "long") {
+            column = columns - 1 - column;
         }
 
-        const img = qrCanvases[i].toDataURL("image/png");
+        if (isBack && duplexMode === "short") {
+            row = rows - 1 - row;
+        }
 
-        pdf.addImage(
-            img,
-            "PNG",
-            left,
-            y,
-            qrSize,
-            qrSize
+        return {
+            x: marginLeft + column * cardWidth,
+            y: marginTop + row * cardHeight
+        };
+    }
+
+    function drawCutMarks() {
+        pdf.setDrawColor(0);
+        pdf.setLineWidth(0.15);
+
+        const markLength = 3;
+
+        for (let column = 0; column <= columns; column++) {
+            const x = marginLeft + column * cardWidth;
+
+            pdf.line(
+                x,
+                marginTop - markLength,
+                x,
+                marginTop
+            );
+
+            pdf.line(
+                x,
+                marginTop + contentHeight,
+                x,
+                marginTop + contentHeight + markLength
+            );
+        }
+
+        for (let row = 0; row <= rows; row++) {
+            const y = marginTop + row * cardHeight;
+
+            pdf.line(
+                marginLeft - markLength,
+                y,
+                marginLeft,
+                y
+            );
+
+            pdf.line(
+                marginLeft + contentWidth,
+                y,
+                marginLeft + contentWidth + markLength,
+                y
+            );
+        }
+    }
+
+    function addFooter(pageNumber, totalPages, side) {
+        pdf.setFontSize(7);
+
+        pdf.text(
+            `HH Musikquiz – Version 11 – ${side}`,
+            10,
+            pageHeight - 5
         );
 
-        pdf.setFontSize(9);
+        pdf.text(
+            `Seite ${pageNumber}/${totalPages}`,
+            pageWidth - 10,
+            pageHeight - 5,
+            { align: "right" }
+        );
+    }
 
-        pdf.text(card.ID || "", 55, y + 5);
-        pdf.text(card.Film || "", 55, y + 11);
-        pdf.text(card.Interpret || "", 55, y + 17);
-        pdf.text(card.Titel || "", 55, y + 23);
+    function addWrappedText(text, x, y, width, fontSize) {
+        if (!text) {
+            return y;
+        }
 
-        if (card.Jahr)
-            pdf.text(String(card.Jahr), 55, y + 29);
+        pdf.setFontSize(fontSize);
 
-        y += rowHeight;
-    });
+        const lines = pdf.splitTextToSize(
+            String(text),
+            width
+        );
 
-    pdf.save("HH-Musikquiz-Karten.pdf");
+        pdf.text(lines, x, y);
 
-    statusText.textContent = "PDF wurde erstellt.";
+        return y + lines.length * (fontSize * 0.38);
+    }
+
+    const totalPages = sheetCount * 2;
+    let currentPage = 0;
+
+    for (
+        let sheetIndex = 0;
+        sheetIndex < sheetCount;
+        sheetIndex++
+    ) {
+        if (currentPage > 0) {
+            pdf.addPage();
+        }
+
+        currentPage++;
+
+        drawCutMarks();
+
+        const startIndex =
+            sheetIndex * cardsPerSheet;
+
+        const endIndex = Math.min(
+            startIndex + cardsPerSheet,
+            data.length
+        );
+
+        for (
+            let cardIndex = startIndex;
+            cardIndex < endIndex;
+            cardIndex++
+        ) {
+            const card = data[cardIndex];
+
+            const position =
+                getCardPosition(cardIndex, false);
+
+            const qrImage =
+                qrCanvases[cardIndex].toDataURL(
+                    "image/png"
+                );
+
+            const qrSize = 43;
+
+            const qrX =
+                position.x +
+                (cardWidth - qrSize) / 2;
+
+            const qrY = position.y + 7;
+
+            pdf.addImage(
+                qrImage,
+                "PNG",
+                qrX,
+                qrY,
+                qrSize,
+                qrSize
+            );
+
+            pdf.setFontSize(8);
+
+            pdf.text(
+                String(card.ID || ""),
+                position.x + cardWidth / 2,
+                position.y + 56,
+                { align: "center" }
+            );
+        }
+
+        addFooter(
+            currentPage,
+            totalPages,
+            "Vorderseiten"
+        );
+
+        pdf.addPage();
+        currentPage++;
+
+        drawCutMarks();
+
+        for (
+            let cardIndex = startIndex;
+            cardIndex < endIndex;
+            cardIndex++
+        ) {
+            const card = data[cardIndex];
+
+            const position =
+                getCardPosition(cardIndex, true);
+
+            const textX = position.x + 5;
+            const textWidth = cardWidth - 10;
+
+            let textY = position.y + 7;
+
+            pdf.setFont("helvetica", "bold");
+            pdf.setFontSize(10);
+
+            const filmLines = pdf.splitTextToSize(
+                String(card.Film || ""),
+                textWidth
+            );
+
+            pdf.text(
+                filmLines,
+                position.x + cardWidth / 2,
+                textY,
+                { align: "center" }
+            );
+
+            textY += filmLines.length * 4.2 + 3;
+
+            pdf.setFont("helvetica", "normal");
+
+            textY = addWrappedText(
+                `Interpret: ${card.Interpret || ""}`,
+                textX,
+                textY,
+                textWidth,
+                8
+            );
+
+            textY = addWrappedText(
+                `Titel: ${card.Titel || ""}`,
+                textX,
+                textY + 1,
+                textWidth,
+                8
+            );
+
+            textY = addWrappedText(
+                `Version: ${card.Version || ""}`,
+                textX,
+                textY + 1,
+                textWidth,
+                8
+            );
+
+            textY = addWrappedText(
+                `Jahr: ${card.Jahr || ""}`,
+                textX,
+                textY + 1,
+                textWidth,
+                8
+            );
+
+            addWrappedText(
+                String(card.Info || ""),
+                textX,
+                textY + 3,
+                textWidth,
+                7
+            );
+
+            pdf.setFontSize(7);
+
+            pdf.text(
+                String(card.ID || ""),
+                position.x + cardWidth / 2,
+                position.y + cardHeight - 5,
+                { align: "center" }
+            );
+        }
+
+        addFooter(
+            currentPage,
+            totalPages,
+            "Rückseiten"
+        );
+    }
+
+    pdf.save(
+        "HH-Musikquiz-Duplex-Karten.pdf"
+    );
+
+    statusText.textContent =
+        `PDF mit ${totalPages} Seiten wurde erstellt.`;
 }
 
 csvInput.addEventListener("change", () => {
