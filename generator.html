@@ -110,7 +110,7 @@ canvas{
     🎵 HH Musikquiz
 
     <div style="font-size:18px;font-weight:normal;margin-top:8px;">
-        Version 8
+        Version 14
     </div>
 </header>
 
@@ -388,7 +388,7 @@ function downloadAllQrCodes() {
         pdf.setFontSize(7);
 
         pdf.text(
-            `HH Musikquiz – Version 11 – ${side}`,
+            `HH Musikquiz – Version 14 – ${side}`,
             10,
             pageHeight - 5
         );
@@ -505,79 +505,187 @@ function downloadAllQrCodes() {
             const position =
                 getCardPosition(cardIndex, true);
 
-            const textX = position.x + 5;
-            const textWidth = cardWidth - 10;
+                const centerX =
+    position.x + cardWidth / 2;
 
-            let textY = position.y + 7;
+const textWidth =
+    cardWidth - 10;
 
-            pdf.setFont("helvetica", "bold");
-            pdf.setFontSize(10);
+pdf.setFont(
+    "helvetica",
+    "bold"
+);
 
-            const filmLines = pdf.splitTextToSize(
-                String(card.Film || ""),
-                textWidth
-            );
+pdf.setFontSize(10);
 
-            pdf.text(
-                filmLines,
-                position.x + cardWidth / 2,
-                textY,
-                { align: "center" }
-            );
+const filmLines =
+    pdf.splitTextToSize(
+        String(card.Film || ""),
+        textWidth
+    );
 
-            textY += filmLines.length * 4.2 + 3;
+pdf.setFont(
+    "helvetica",
+    "normal"
+);
 
-            pdf.setFont("helvetica", "normal");
+pdf.setFontSize(8);
 
-            textY = addWrappedText(
-                `Interpret: ${card.Interpret || ""}`,
-                textX,
-                textY,
-                textWidth,
-                8
-            );
+const interpretLines =
+    pdf.splitTextToSize(
+        String(card.Interpret || ""),
+        textWidth
+    );
 
-            textY = addWrappedText(
-                `Titel: ${card.Titel || ""}`,
-                textX,
-                textY + 1,
-                textWidth,
-                8
-            );
+const titleLines =
+    pdf.splitTextToSize(
+        String(card.Titel || ""),
+        textWidth
+    );
 
-            textY = addWrappedText(
-                `Version: ${card.Version || ""}`,
-                textX,
-                textY + 1,
-                textWidth,
-                8
-            );
+const versionLines =
+    pdf.splitTextToSize(
+        String(card.Version || ""),
+        textWidth
+    );
 
-            textY = addWrappedText(
-                `Jahr: ${card.Jahr || ""}`,
-                textX,
-                textY + 1,
-                textWidth,
-                8
-            );
+pdf.setFontSize(7);
 
-            addWrappedText(
-                String(card.Info || ""),
-                textX,
-                textY + 3,
-                textWidth,
-                7
-            );
+const infoLines =
+    pdf.splitTextToSize(
+        String(card.Info || ""),
+        textWidth
+    );
 
-            pdf.setFontSize(7);
+const filmHeight =
+    filmLines.length * 4.2;
 
-            pdf.text(
-                String(card.ID || ""),
-                position.x + cardWidth / 2,
-                position.y + cardHeight - 5,
-                { align: "center" }
-            );
-        }
+const interpretHeight =
+    interpretLines.length * 3.2;
+
+const titleHeight =
+    titleLines.length * 3.2;
+
+const versionHeight =
+    versionLines.length * 3.2;
+
+const yearHeight = 9;
+
+const infoHeight =
+    infoLines.length * 2.8;
+
+const spacing = 2;
+
+const totalTextHeight =
+    filmHeight +
+    interpretHeight +
+    titleHeight +
+    versionHeight +
+    yearHeight +
+    infoHeight +
+    spacing * 5;
+
+let textY =
+    position.y +
+    (cardHeight - totalTextHeight) / 2;
+
+pdf.setFont(
+    "helvetica",
+    "bold"
+);
+
+pdf.setFontSize(10);
+
+pdf.text(
+    filmLines,
+    centerX,
+    textY,
+    { align: "center" }
+);
+
+textY +=
+    filmHeight + spacing;
+
+pdf.setFont(
+    "helvetica",
+    "normal"
+);
+
+pdf.setFontSize(8);
+
+pdf.text(
+    interpretLines,
+    centerX,
+    textY,
+    { align: "center" }
+);
+
+textY +=
+    interpretHeight + spacing;
+
+pdf.text(
+    titleLines,
+    centerX,
+    textY,
+    { align: "center" }
+);
+
+textY +=
+    titleHeight + spacing;
+
+if (String(card.Version || "").trim()) {
+    pdf.text(
+        versionLines,
+        centerX,
+        textY,
+        { align: "center" }
+    );
+
+    textY +=
+        versionHeight + spacing;
+}
+
+pdf.setFont(
+    "helvetica",
+    "bold"
+);
+
+pdf.setFontSize(24);
+
+pdf.text(
+    String(card.Jahr || ""),
+    centerX,
+    textY + 7,
+    { align: "center" }
+);
+
+textY +=
+    yearHeight + spacing;
+
+pdf.setFont(
+    "helvetica",
+    "normal"
+);
+
+pdf.setFontSize(7);
+
+if (String(card.Info || "").trim()) {
+    pdf.text(
+        infoLines,
+        centerX,
+        textY,
+        { align: "center" }
+    );
+}
+
+pdf.setFontSize(6);
+
+pdf.text(
+    String(card.ID || ""),
+    centerX,
+    position.y + cardHeight - 3,
+    { align: "center" }
+);
 
         addFooter(
             currentPage,
