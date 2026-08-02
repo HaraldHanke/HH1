@@ -1,4 +1,8 @@
 <!DOCTYPE html>
+<script>
+    const APP_VERSION = 18;
+</script>
+
 <html lang="de">
 
 <head>
@@ -109,9 +113,11 @@ canvas{
 <header>
     🎵 HH Musikquiz
 
-    <div style="font-size:18px;font-weight:normal;margin-top:8px;">
-        Version 17
-    </div>
+<div
+    id="versionDisplay"
+    style="font-size:18px;font-weight:normal;margin-top:8px;"
+></div>
+
 </header>
 
 <main>
@@ -194,6 +200,11 @@ const errorsCount = document.getElementById("errors");
 const table = document.getElementById("tbl");
 const searchInput = document.getElementById("search");
 const downloadQrButton = document.getElementById("downloadQr");
+
+const versionDisplay =
+    document.getElementById("versionDisplay");
+versionDisplay.textContent =
+    `Version ${APP_VERSION}`;
 
 let data = [];
 
@@ -389,7 +400,7 @@ function downloadAllQrCodes() {
         pdf.setFontSize(7);
 
         pdf.text(
-            `HH Musikquiz – Version 14 – ${side}`,
+            `HH Musikquiz – Version ${APP_VERSION} – ${side}`,
             10,
             pageHeight - 5
         );
