@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <title>HH Musikquiz Player – Version 2</title>
+  <title>HH Musikquiz Player – Version 3</title>
 
   <script src="https://cdn.jsdelivr.net/npm/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
 
@@ -177,7 +177,7 @@
 <body>
   <header>
     <h1>HH Musikquiz Player</h1>
-    <div class="version">Version 2</div>
+    <div class="version">Version 3</div>
   </header>
 
   <main>
@@ -220,7 +220,8 @@
   <script>
     "use strict";
 
-    const APP_VERSION = 1;
+    const PLAYER_VERSION = 3;
+    const QR_FORMAT_VERSION = 1;
     const APPLE_COUNTRY = "DE";
     const SEARCH_LIMIT = 50;
     const MIN_ACCEPTABLE_SCORE = 50;
@@ -234,6 +235,9 @@
     const cardIdElement = document.getElementById("cardId");
     const playerBox = document.getElementById("playerBox");
     const audioPlayer = document.getElementById("audioPlayer");
+    const versionElement = document.querySelector("header .version");
+
+    versionElement.textContent = `Version ${PLAYER_VERSION}`;
 
     let qrScanner = null;
     let scannerRunning = false;
@@ -306,7 +310,7 @@
         }
       }
 
-      if (data.v !== APP_VERSION) {
+      if (data.v !== QR_FORMAT_VERSION) {
         throw new Error(`Nicht unterstützte QR-Version: ${String(data.v)}`);
       }
 
@@ -337,7 +341,7 @@
       }
 
       return {
-        v: APP_VERSION,
+        v: QR_FORMAT_VERSION,
         id,
         artist,
         title,
@@ -352,18 +356,77 @@
         .join(" ");
     }
 
-    function appleSearch(searchTerm) {
+    async function appleSearch(searchTerm) {
+      const params = new URLSearchParams({
+        term: searchTerm,
+        country: APPLE_COUNTRY,
+        media: "music",
+        entity: "song",
+        limit: String(SEARCH_LIMIT)
+      });
+
+      const searchUrl = `https://itunes.apple.com/search?${params.toString()}`;
+
+      /*
+       * Hauptweg: normaler HTTPS-Aufruf mit fetch.
+       * Apple liefert die Treffer als JSON zurück.
+       */
+      try {
+        const response = await fetch(searchUrl, {
+          method: "GET",
+          mode: "cors",
+          cache: "no-store",
+          credentials: "omit",
+          headers: {
+            "Accept": "application/json"
+          }
+        });
+
+        if (!response.ok) {
+          throw new Error(`Apple antwortet mit HTTP ${response.status}.`);
+        }
+
+        const data = await response.json();
+
+        if (!data || !Array.isArray(data.results)) {
+          throw new Error("Apple hat keine verwertbare Antwort geliefert.");
+        }
+
+        return data.results;
+      } catch (fetchError) {
+        /*
+         * Rückfallweg für Browser, in denen der direkte Abruf blockiert wird:
+         * JSONP mit einer einmaligen Callback-Funktion.
+         */
+        return appleSearchJsonp(searchTerm, fetchError);
+      }
+    }
+
+    function appleSearchJsonp(searchTerm, previousError) {
       return new Promise((resolve, reject) => {
-        const callbackName = `appleSearchCallback_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+        const callbackName =
+          `hhAppleCallback_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+
         const script = document.createElement("script");
         const timeout = window.setTimeout(() => {
           cleanup();
-          reject(new Error("Die Apple-Suche hat zu lange gedauert."));
-        }, 12000);
+          reject(
+            new Error(
+              "Apple ist derzeit nicht erreichbar. " +
+              "Bitte Internetverbindung prüfen und die Seite neu laden."
+            )
+          );
+        }, 15000);
 
         function cleanup() {
           window.clearTimeout(timeout);
-          delete window[callbackName];
+
+          try {
+            delete window[callbackName];
+          } catch {
+            window[callbackName] = undefined;
+          }
+
           script.remove();
         }
 
@@ -380,7 +443,17 @@
 
         script.onerror = () => {
           cleanup();
-          reject(new Error("Die Apple-Suche konnte nicht geladen werden."));
+
+          const detail = previousError?.message
+            ? ` Technischer Hinweis: ${previousError.message}`
+            : "";
+
+          reject(
+            new Error(
+              "Die Apple-Suche konnte auch über den Ersatzweg nicht geladen werden." +
+              detail
+            )
+          );
         };
 
         const params = new URLSearchParams({
@@ -393,6 +466,8 @@
         });
 
         script.src = `https://itunes.apple.com/search?${params.toString()}`;
+        script.async = true;
+        script.referrerPolicy = "no-referrer";
         document.head.appendChild(script);
       });
     }
