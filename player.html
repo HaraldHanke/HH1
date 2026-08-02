@@ -1,1 +1,695 @@
-h
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>HH Musikquiz Player – Version 1</title>
+
+  <script src="https://cdn.jsdelivr.net/npm/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+
+  <style>
+    :root {
+      color-scheme: light;
+      --blue: #0a84ff;
+      --blue-dark: #0066cc;
+      --green: #248a3d;
+      --red: #c62828;
+      --orange: #b35a00;
+      --bg: #f2f2f7;
+      --card: #ffffff;
+      --text: #1c1c1e;
+      --muted: #6e6e73;
+      --border: #d1d1d6;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: Arial, Helvetica, sans-serif;
+      color: var(--text);
+      background: var(--bg);
+    }
+
+    header {
+      padding: 18px 16px;
+      color: white;
+      background: var(--blue);
+      text-align: center;
+    }
+
+    header h1 {
+      margin: 0;
+      font-size: clamp(24px, 6vw, 34px);
+    }
+
+    header .version {
+      margin-top: 5px;
+      font-size: 14px;
+      opacity: 0.9;
+    }
+
+    main {
+      width: min(720px, calc(100% - 24px));
+      margin: 18px auto 40px;
+    }
+
+    .panel {
+      margin-bottom: 14px;
+      padding: 16px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    }
+
+    .panel h2 {
+      margin: 0 0 12px;
+      font-size: 20px;
+    }
+
+    #reader {
+      width: 100%;
+      overflow: hidden;
+      border-radius: 12px;
+    }
+
+    .button-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 14px;
+    }
+
+    button {
+      min-height: 46px;
+      padding: 11px 16px;
+      border: 0;
+      border-radius: 10px;
+      color: white;
+      background: var(--blue);
+      font-size: 16px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background: var(--blue-dark);
+    }
+
+    button.secondary {
+      color: var(--text);
+      background: #e5e5ea;
+    }
+
+    button.danger {
+      background: var(--red);
+    }
+
+    button:disabled {
+      cursor: not-allowed;
+      opacity: 0.45;
+    }
+
+    #status {
+      min-height: 54px;
+      padding: 12px;
+      border-left: 5px solid var(--blue);
+      border-radius: 8px;
+      background: #eef6ff;
+      line-height: 1.45;
+    }
+
+    #status.success {
+      border-color: var(--green);
+      background: #eef8f0;
+    }
+
+    #status.error {
+      border-color: var(--red);
+      background: #fff0f0;
+    }
+
+    #status.warning {
+      border-color: var(--orange);
+      background: #fff7e8;
+    }
+
+    .card-id {
+      margin-top: 10px;
+      color: var(--muted);
+      font-size: 13px;
+      overflow-wrap: anywhere;
+    }
+
+    .player-box {
+      display: none;
+    }
+
+    .player-box.visible {
+      display: block;
+    }
+
+    audio {
+      width: 100%;
+      margin-top: 8px;
+    }
+
+    .technical-details {
+      margin-top: 14px;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.45;
+    }
+
+    footer {
+      padding: 20px 12px 32px;
+      color: var(--muted);
+      text-align: center;
+      font-size: 12px;
+    }
+  </style>
+</head>
+
+<body>
+  <header>
+    <h1>HH Musikquiz Player</h1>
+    <div class="version">Version 1</div>
+  </header>
+
+  <main>
+    <section class="panel">
+      <h2>QR-Code scannen</h2>
+      <div id="reader"></div>
+
+      <div class="button-row">
+        <button id="startButton" type="button">Kamera starten</button>
+        <button id="stopCameraButton" type="button" class="secondary" disabled>Kamera stoppen</button>
+        <button id="newCardButton" type="button" class="secondary" disabled>Nächste Karte</button>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h2>Status</h2>
+      <div id="status">Bereit. Bitte die Kamera starten und einen QR-Code scannen.</div>
+      <div id="cardId" class="card-id"></div>
+    </section>
+
+    <section id="playerBox" class="panel player-box">
+      <h2>Hörprobe</h2>
+      <audio id="audioPlayer" controls playsinline preload="none"></audio>
+
+      <div class="button-row">
+        <button id="playButton" type="button" disabled>Hörprobe starten</button>
+        <button id="discardButton" type="button" class="danger" disabled>Hörprobe beenden</button>
+      </div>
+
+      <div class="technical-details">
+        Die Apple-Preview-Adresse wird nur für die aktuelle Hörprobe verwendet und anschließend aus dem Player entfernt.
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    HH Musikquiz · Die Titeldaten werden ausschließlich zur Suche der aktuellen Apple-Hörprobe verwendet.
+  </footer>
+
+  <script>
+    "use strict";
+
+    const APP_VERSION = 1;
+    const APPLE_COUNTRY = "DE";
+    const SEARCH_LIMIT = 50;
+    const MIN_ACCEPTABLE_SCORE = 50;
+
+    const startButton = document.getElementById("startButton");
+    const stopCameraButton = document.getElementById("stopCameraButton");
+    const newCardButton = document.getElementById("newCardButton");
+    const playButton = document.getElementById("playButton");
+    const discardButton = document.getElementById("discardButton");
+    const statusElement = document.getElementById("status");
+    const cardIdElement = document.getElementById("cardId");
+    const playerBox = document.getElementById("playerBox");
+    const audioPlayer = document.getElementById("audioPlayer");
+
+    let qrScanner = null;
+    let scannerRunning = false;
+    let scanLocked = false;
+    let currentCard = null;
+    let currentPreviewUrl = null;
+
+    function setStatus(message, type = "") {
+      statusElement.textContent = message;
+      statusElement.className = type;
+    }
+
+    function normalizeText(value) {
+      return String(value ?? "")
+        .toLocaleLowerCase("de-DE")
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .replace(/&/g, " und ")
+        .replace(/[()[\]{}]/g, " ")
+        .replace(/[^a-z0-9]+/g, " ")
+        .replace(/\s+/g, " ")
+        .trim();
+    }
+
+    function tokenize(value) {
+      const normalized = normalizeText(value);
+      return normalized ? normalized.split(" ") : [];
+    }
+
+    function tokenSimilarity(expected, actual) {
+      const expectedTokens = tokenize(expected);
+      const actualTokens = new Set(tokenize(actual));
+
+      if (expectedTokens.length === 0) {
+        return 1;
+      }
+
+      const matches = expectedTokens.filter(token => actualTokens.has(token)).length;
+      return matches / expectedTokens.length;
+    }
+
+    function containsAllExpectedWords(expected, actual) {
+      const expectedTokens = tokenize(expected);
+      const actualNormalized = ` ${normalizeText(actual)} `;
+
+      return expectedTokens.length > 0 &&
+        expectedTokens.every(token => actualNormalized.includes(` ${token} `));
+    }
+
+    function validateQrPayload(rawText) {
+      if (typeof rawText !== "string" || rawText.length > 2500) {
+        throw new Error("Der QR-Code enthält keine zulässigen Daten.");
+      }
+
+      let data;
+      try {
+        data = JSON.parse(rawText);
+      } catch {
+        throw new Error("Der QR-Code enthält kein gültiges JSON-Format.");
+      }
+
+      if (!data || typeof data !== "object" || Array.isArray(data)) {
+        throw new Error("Die QR-Daten haben die falsche Struktur.");
+      }
+
+      const allowedKeys = new Set(["v", "id", "artist", "title", "year", "version"]);
+      for (const key of Object.keys(data)) {
+        if (!allowedKeys.has(key)) {
+          throw new Error(`Unzulässiges Datenfeld im QR-Code: ${key}`);
+        }
+      }
+
+      if (data.v !== APP_VERSION) {
+        throw new Error(`Nicht unterstützte QR-Version: ${String(data.v)}`);
+      }
+
+      const id = String(data.id ?? "").trim();
+      const artist = String(data.artist ?? "").trim();
+      const title = String(data.title ?? "").trim();
+      const version = String(data.version ?? "").trim();
+      const year = String(data.year ?? "").trim();
+
+      if (!/^FILM-[A-HJ-NP-Z2-9]{6}$/.test(id)) {
+        throw new Error("Die Karten-ID ist ungültig.");
+      }
+
+      if (artist.length < 1 || artist.length > 150) {
+        throw new Error("Der Interpret fehlt oder ist zu lang.");
+      }
+
+      if (title.length < 1 || title.length > 200) {
+        throw new Error("Der Titel fehlt oder ist zu lang.");
+      }
+
+      if (version.length > 150) {
+        throw new Error("Die Versionsangabe ist zu lang.");
+      }
+
+      if (year && !/^\d{4}$/.test(year)) {
+        throw new Error("Die Jahreszahl ist ungültig.");
+      }
+
+      return {
+        v: APP_VERSION,
+        id,
+        artist,
+        title,
+        year,
+        version
+      };
+    }
+
+    function buildSearchTerm(card) {
+      return [card.artist, card.title, card.version]
+        .filter(Boolean)
+        .join(" ");
+    }
+
+    function appleSearch(searchTerm) {
+      return new Promise((resolve, reject) => {
+        const callbackName = `appleSearchCallback_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+        const script = document.createElement("script");
+        const timeout = window.setTimeout(() => {
+          cleanup();
+          reject(new Error("Die Apple-Suche hat zu lange gedauert."));
+        }, 12000);
+
+        function cleanup() {
+          window.clearTimeout(timeout);
+          delete window[callbackName];
+          script.remove();
+        }
+
+        window[callbackName] = data => {
+          cleanup();
+
+          if (!data || !Array.isArray(data.results)) {
+            reject(new Error("Apple hat keine verwertbare Antwort geliefert."));
+            return;
+          }
+
+          resolve(data.results);
+        };
+
+        script.onerror = () => {
+          cleanup();
+          reject(new Error("Die Apple-Suche konnte nicht geladen werden."));
+        };
+
+        const params = new URLSearchParams({
+          term: searchTerm,
+          country: APPLE_COUNTRY,
+          media: "music",
+          entity: "song",
+          attribute: "mixTerm",
+          limit: String(SEARCH_LIMIT),
+          callback: callbackName
+        });
+
+        script.src = `https://itunes.apple.com/search?${params.toString()}`;
+        document.head.appendChild(script);
+      });
+    }
+
+    function scoreResult(card, result) {
+      const resultArtist = result.artistName ?? "";
+      const resultTitle = result.trackName ?? "";
+      const resultCollection = result.collectionName ?? "";
+      const combined = `${resultTitle} ${resultCollection}`;
+
+      let score = 0;
+
+      const artistSimilarity = tokenSimilarity(card.artist, resultArtist);
+      const titleSimilarity = tokenSimilarity(card.title, resultTitle);
+
+      score += artistSimilarity * 42;
+      score += titleSimilarity * 46;
+
+      if (normalizeText(card.artist) === normalizeText(resultArtist)) {
+        score += 18;
+      } else if (containsAllExpectedWords(card.artist, resultArtist)) {
+        score += 10;
+      }
+
+      if (normalizeText(card.title) === normalizeText(resultTitle)) {
+        score += 22;
+      } else if (containsAllExpectedWords(card.title, resultTitle)) {
+        score += 12;
+      }
+
+      if (card.version) {
+        const versionSimilarity = tokenSimilarity(card.version, combined);
+        score += versionSimilarity * 24;
+
+        if (containsAllExpectedWords(card.version, combined)) {
+          score += 10;
+        } else {
+          score -= 8;
+        }
+      }
+
+      if (card.year && result.releaseDate) {
+        const resultYear = String(result.releaseDate).slice(0, 4);
+        const difference = Math.abs(Number(card.year) - Number(resultYear));
+
+        if (difference === 0) {
+          score += 7;
+        } else if (difference === 1) {
+          score += 3;
+        }
+      }
+
+      const unwantedTerms = ["karaoke", "tribute", "cover", "instrumental"];
+      const requestedText = normalizeText(`${card.title} ${card.version}`);
+      const resultText = normalizeText(`${resultTitle} ${resultCollection} ${resultArtist}`);
+
+      for (const term of unwantedTerms) {
+        if (resultText.includes(term) && !requestedText.includes(term)) {
+          score -= 25;
+        }
+      }
+
+      const optionalVariants = ["live", "remix", "remastered", "acoustic"];
+      for (const term of optionalVariants) {
+        if (resultText.includes(term) && !requestedText.includes(term)) {
+          score -= 10;
+        }
+      }
+
+      if (!result.previewUrl) {
+        score -= 100;
+      }
+
+      return score;
+    }
+
+    function chooseBestResult(card, results) {
+      const candidates = results
+        .filter(result => result.kind === "song" && typeof result.previewUrl === "string")
+        .map(result => ({
+          result,
+          score: scoreResult(card, result)
+        }))
+        .sort((a, b) => b.score - a.score);
+
+      if (candidates.length === 0) {
+        throw new Error("Apple hat keinen Treffer mit Hörprobe gefunden.");
+      }
+
+      const best = candidates[0];
+
+      if (best.score < MIN_ACCEPTABLE_SCORE) {
+        throw new Error("Es wurde kein ausreichend passender Apple-Treffer gefunden.");
+      }
+
+      return best;
+    }
+
+    async function processCard(card) {
+      currentCard = card;
+      cardIdElement.textContent = `Karten-ID: ${card.id}`;
+
+      setStatus("QR-Code gültig. Apple wird nach der aktuellen Hörprobe durchsucht.");
+      const searchTerm = buildSearchTerm(card);
+      const results = await appleSearch(searchTerm);
+
+      setStatus("Apple-Treffer werden verglichen und bewertet.");
+      const bestMatch = chooseBestResult(card, results);
+
+      currentPreviewUrl = bestMatch.result.previewUrl;
+      audioPlayer.src = currentPreviewUrl;
+      audioPlayer.load();
+
+      playerBox.classList.add("visible");
+      playButton.disabled = false;
+      discardButton.disabled = false;
+      newCardButton.disabled = false;
+
+      setStatus("Passende Hörprobe gefunden. Die Wiedergabe wird gestartet.", "success");
+
+      try {
+        await audioPlayer.play();
+      } catch {
+        setStatus(
+          "Passende Hörprobe gefunden. Bitte auf „Hörprobe starten“ tippen.",
+          "warning"
+        );
+      }
+    }
+
+    function discardPreview(showMessage = true) {
+      audioPlayer.pause();
+      audioPlayer.removeAttribute("src");
+      audioPlayer.load();
+
+      currentPreviewUrl = null;
+      playButton.disabled = true;
+      discardButton.disabled = true;
+
+      if (showMessage) {
+        setStatus("Die Hörprobe wurde beendet und die Preview-Adresse verworfen.");
+      }
+    }
+
+    async function handleDecodedText(decodedText) {
+      if (scanLocked) {
+        return;
+      }
+
+      scanLocked = true;
+
+      try {
+        const card = validateQrPayload(decodedText);
+        await stopScanner();
+        await processCard(card);
+      } catch (error) {
+        setStatus(error.message || "Der QR-Code konnte nicht verarbeitet werden.", "error");
+        scanLocked = false;
+      }
+    }
+
+    async function startScanner() {
+      if (scannerRunning) {
+        return;
+      }
+
+      discardPreview(false);
+      currentCard = null;
+      cardIdElement.textContent = "";
+      playerBox.classList.remove("visible");
+      newCardButton.disabled = true;
+      scanLocked = false;
+
+      setStatus("Kamera wird gestartet.");
+
+      if (!qrScanner) {
+        qrScanner = new Html5Qrcode("reader");
+      }
+
+      try {
+        const cameras = await Html5Qrcode.getCameras();
+
+        if (!cameras || cameras.length === 0) {
+          throw new Error("Es wurde keine Kamera gefunden.");
+        }
+
+        const preferredCamera =
+          cameras.find(camera => /back|rear|environment|rück/i.test(camera.label)) ??
+          cameras[cameras.length - 1];
+
+        await qrScanner.start(
+          preferredCamera.id,
+          {
+            fps: 10,
+            qrbox: (viewfinderWidth, viewfinderHeight) => {
+              const size = Math.floor(Math.min(viewfinderWidth, viewfinderHeight) * 0.72);
+              return { width: size, height: size };
+            },
+            aspectRatio: 1
+          },
+          handleDecodedText,
+          () => {
+            // Normale Lesefehler während des Suchens werden nicht angezeigt.
+          }
+        );
+
+        scannerRunning = true;
+        startButton.disabled = true;
+        stopCameraButton.disabled = false;
+        setStatus("Kamera aktiv. QR-Code vollständig in den Rahmen halten.");
+      } catch (error) {
+        scannerRunning = false;
+        startButton.disabled = false;
+        stopCameraButton.disabled = true;
+        setStatus(
+          error.message || "Die Kamera konnte nicht gestartet werden. Bitte Kamerazugriff erlauben.",
+          "error"
+        );
+      }
+    }
+
+    async function stopScanner() {
+      if (!qrScanner || !scannerRunning) {
+        return;
+      }
+
+      try {
+        await qrScanner.stop();
+        await qrScanner.clear();
+      } catch {
+        // Der Zustand wird trotzdem zurückgesetzt.
+      } finally {
+        scannerRunning = false;
+        startButton.disabled = false;
+        stopCameraButton.disabled = true;
+      }
+    }
+
+    async function prepareNextCard() {
+      discardPreview(false);
+      currentCard = null;
+      cardIdElement.textContent = "";
+      playerBox.classList.remove("visible");
+      newCardButton.disabled = true;
+      scanLocked = false;
+      await startScanner();
+    }
+
+    startButton.addEventListener("click", startScanner);
+
+    stopCameraButton.addEventListener("click", async () => {
+      await stopScanner();
+      setStatus("Kamera gestoppt.");
+    });
+
+    newCardButton.addEventListener("click", prepareNextCard);
+
+    playButton.addEventListener("click", async () => {
+      if (!currentPreviewUrl) {
+        setStatus("Es ist keine Hörprobe geladen.", "error");
+        return;
+      }
+
+      try {
+        await audioPlayer.play();
+        setStatus("Hörprobe wird abgespielt.", "success");
+      } catch {
+        setStatus("Die Hörprobe konnte nicht gestartet werden.", "error");
+      }
+    });
+
+    discardButton.addEventListener("click", () => {
+      discardPreview(true);
+    });
+
+    audioPlayer.addEventListener("ended", () => {
+      discardPreview(false);
+      setStatus("Hörprobe beendet. Die Preview-Adresse wurde verworfen.", "success");
+    });
+
+    audioPlayer.addEventListener("error", () => {
+      if (currentPreviewUrl) {
+        discardPreview(false);
+        setStatus(
+          "Die Hörprobe konnte nicht geladen werden. Die Preview-Adresse wurde verworfen.",
+          "error"
+        );
+      }
+    });
+
+    window.addEventListener("beforeunload", () => {
+      if (scannerRunning && qrScanner) {
+        qrScanner.stop().catch(() => {});
+      }
+      discardPreview(false);
+    });
+  </script>
+</body>
+</html>
