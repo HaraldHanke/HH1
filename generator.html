@@ -110,7 +110,7 @@ canvas{
     🎵 HH Musikquiz
 
     <div style="font-size:18px;font-weight:normal;margin-top:8px;">
-        Version 16
+        Version 17
     </div>
 </header>
 
@@ -453,27 +453,46 @@ function downloadAllQrCodes() {
             const position =
                 getCardPosition(cardIndex, false);
 
-            const qrImage =
-                qrCanvases[cardIndex].toDataURL(
-                    "image/png"
-                );
+            const qrCanvas = qrCanvases[cardIndex];
 
-            const qrSize = 43;
+const qrImage =
+    qrCanvas.toDataURL("image/png");
 
-            const qrX =
-                position.x +
-                (cardWidth - qrSize) / 2;
+const qrOriginalWidth =
+    qrCanvas.width || 100;
 
-            const qrY = position.y + 7;
+const qrOriginalHeight =
+    qrCanvas.height || 100;
 
-            pdf.addImage(
-                qrImage,
-                "PNG",
-                qrX,
-                qrY,
-                qrSize,
-                qrSize
-            );
+const maxQrSize = 43;
+
+const scale = Math.min(
+    maxQrSize / qrOriginalWidth,
+    maxQrSize / qrOriginalHeight
+);
+
+const qrWidth =
+    qrOriginalWidth * scale;
+
+const qrHeight =
+    qrOriginalHeight * scale;
+
+const qrX =
+    position.x +
+    (cardWidth - qrWidth) / 2;
+
+const qrY =
+    position.y + 7 +
+    (maxQrSize - qrHeight) / 2;
+
+pdf.addImage(
+    qrImage,
+    "PNG",
+    qrX,
+    qrY,
+    qrWidth,
+    qrHeight
+);
 
             pdf.setFontSize(8);
 
