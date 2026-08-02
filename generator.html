@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <script>
-    const APP_VERSION = 18;
+    const APP_VERSION = 19;
 </script>
 
 <html lang="de">
@@ -230,10 +230,13 @@ function createQrCode(canvas, qrData) {
     new QRious({
         element: canvas,
         value: JSON.stringify(qrData),
-        size: 100,
+        size: 600,
         level: "M",
-        padding: 4
+        padding: 24
     });
+
+    canvas.style.width = "100px";
+    canvas.style.height = "100px";
 
     return Promise.resolve();
 }
