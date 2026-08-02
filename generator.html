@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <script>
-    const APP_VERSION = 19;
+    const APP_VERSION = 20;
 </script>
 
 <html lang="de">
@@ -102,6 +102,32 @@ canvas{
     margin:auto;
 }
 
+.site-footer{
+    max-width:1100px;
+    margin:0 auto;
+    padding:0 18px 30px;
+    text-align:center;
+    font-size:16px;
+}
+
+.site-footer a{
+    color:#0066cc;
+    text-decoration:underline;
+}
+
+.imprint{
+    text-align:left;
+    line-height:1.5;
+}
+
+.imprint h2{
+    margin-top:0;
+}
+
+.imprint p{
+    margin:12px 0;
+}
+
 </style>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -187,6 +213,48 @@ canvas{
 </div>
 
 </main>
+
+<footer class="site-footer">
+    <p>
+        <a href="#impressum">Impressum</a>
+    </p>
+
+    <section id="impressum" class="box imprint">
+        <h2>Impressum</h2>
+
+        <p>
+            <strong>Angaben gemäß § 5 DDG</strong>
+        </p>
+
+        <p>
+            Dr. Harald Hanke<br>
+            Reutgrabenweg 14<br>
+            76297 Stutensee<br>
+            Deutschland
+        </p>
+
+        <p>
+            <strong>Kontakt</strong><br>
+            E-Mail:
+            <a href="mailto:[E-Mail-Adresse]">
+                harald at hanke.com
+            </a>
+        </p>
+
+        <p>
+            <strong>Verantwortlich für den Inhalt</strong><br>
+            Dr. Harald Hanke<br>
+            Reutgrabenweg 14<br>
+            76297 Stutensee
+        </p>
+
+        <p>
+            Dieses Angebot ist ein privates Musikquiz-Projekt.
+            Es besteht keine Verbindung zu Apple, GitHub oder den
+            Rechteinhabern der genannten Filme und Musikstücke.
+        </p>
+    </section>
+</footer>
 
 <script>
 const ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
