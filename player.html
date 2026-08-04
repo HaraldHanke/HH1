@@ -51,13 +51,13 @@
     }
 
     main {
-      width: min(760px, calc(100% - 22px));
-      margin: 16px auto 38px;
+      width: min(760px, calc(100% - 18px));
+      margin: 10px auto 24px;
     }
 
     .panel {
-      margin-bottom: 16px;
-      padding: 18px;
+      margin-bottom: 10px;
+      padding: 14px;
       background: var(--card);
       border: 1px solid var(--border);
       border-radius: 20px;
@@ -65,15 +65,15 @@
     }
 
     .panel h2 {
-      margin: 0 0 14px;
-      font-size: 22px;
+      margin: 0 0 10px;
+      font-size: 21px;
     }
 
     .camera-panel.compact { display: none; }
 
     #reader {
       width: 100%;
-      min-height: 390px;
+      min-height: 360px;
       overflow: hidden;
       border-radius: 18px;
       background: #061008;
@@ -81,7 +81,7 @@
 
     #reader video {
       width: 100% !important;
-      min-height: 390px;
+      min-height: 360px;
       object-fit: cover;
       border-radius: 18px;
     }
@@ -113,22 +113,25 @@
 
     .camera-actions {
       display: grid;
-      grid-template-columns: minmax(0, 1fr) auto;
-      gap: 10px;
-      margin-top: 14px;
+      grid-template-columns: minmax(0, 1fr) auto auto;
+      gap: 8px;
+      margin-top: 10px;
+      align-items: stretch;
     }
 
     .primary-large {
       width: 100%;
-      min-height: 62px;
-      font-size: 21px;
-      border-radius: 17px;
+      min-height: 58px;
+      font-size: 20px;
+      border-radius: 16px;
     }
 
-    .small-button {
-      min-width: 82px;
-      padding: 10px 12px;
-      font-size: 14px;
+    .icon-button {
+      width: 52px;
+      min-width: 52px;
+      padding: 0;
+      font-size: 22px;
+      border-radius: 14px;
     }
 
     .camera-choice {
@@ -157,9 +160,17 @@
       font-size: 15px;
     }
 
+    .status-panel {
+      display: none;
+    }
+
+    .status-panel.visible {
+      display: block;
+    }
+
     #status {
-      min-height: 54px;
-      padding: 13px 14px;
+      min-height: 48px;
+      padding: 11px 13px;
       border-left: 6px solid var(--green);
       border-radius: 10px;
       background: var(--green-soft);
@@ -232,13 +243,6 @@
       background: linear-gradient(135deg, #15803d, #22c55e 62%, #84cc16);
     }
 
-    .technical-details {
-      margin-top: 12px;
-      color: var(--muted);
-      font-size: 12px;
-      line-height: 1.45;
-    }
-
     details.imprint summary {
       cursor: pointer;
       font-size: 18px;
@@ -262,8 +266,8 @@
     }
 
     @media (max-width: 520px) {
-      #reader, #reader video { min-height: 440px; }
-      .panel { padding: 16px; }
+      #reader, #reader video { min-height: 390px; }
+      .panel { padding: 13px; }
     }
   </style>
 </head>
@@ -284,20 +288,35 @@
           Kamera starten
         </button>
 
-        <button id="torchButton" type="button" class="secondary small-button" disabled>
-          Lampe
+        <button
+          id="torchButton"
+          type="button"
+          class="secondary icon-button"
+          aria-label="Lampe"
+          title="Lampe"
+          disabled>
+          &#128161;
+        </button>
+
+        <button
+          id="cameraChoiceButton"
+          type="button"
+          class="secondary icon-button"
+          aria-label="Kamera ausw&auml;hlen"
+          title="Kamera ausw&auml;hlen">
+          &#128247;
         </button>
       </div>
 
       <div id="cameraChoiceBox" class="camera-choice" hidden>
-        <label for="cameraSelect">R&uuml;ckkamera</label>
+        <label for="cameraSelect">R&uuml;ckkamera ausw&auml;hlen</label>
         <select id="cameraSelect"></select>
       </div>
     </section>
 
-    <section class="panel">
+    <section id="statusPanel" class="panel status-panel">
       <h2>Status</h2>
-      <div id="status">Bereit. Bitte die Kamera starten und einen QR-Code scannen.</div>
+      <div id="status"></div>
       <div id="cardId" class="card-id"></div>
     </section>
 
@@ -306,8 +325,12 @@
 
       <audio id="audioPlayer" playsinline preload="none"></audio>
 
-      <button id="playPauseButton" type="button" class="player-main-button">
-        Pause
+      <button
+        id="playPauseButton"
+        type="button"
+        class="player-main-button"
+        aria-label="Pause">
+        &#10074;&#10074;
       </button>
 
       <div class="progress-wrap">
@@ -334,10 +357,6 @@
         N&auml;chste Karte
       </button>
 
-      <div class="technical-details">
-        Die Deezer-Vorschauadresse wird nur f&uuml;r die aktuelle H&ouml;rprobe
-        verwendet und beim Wechsel zur n&auml;chsten Karte entfernt.
-      </div>
     </section>
 
     <section class="panel">
@@ -384,7 +403,7 @@
   <script>
     "use strict";
 
-    const PLAYER_VERSION = 13;
+    const PLAYER_VERSION = 14;
     const QR_FORMAT_VERSION = 1;
     const SEARCH_LIMIT = 25;
     const REQUEST_TIMEOUT_MS = 15000;
@@ -394,6 +413,7 @@
     const cameraPanel = document.getElementById("cameraPanel");
     const startButton = document.getElementById("startButton");
     const torchButton = document.getElementById("torchButton");
+    const cameraChoiceButton = document.getElementById("cameraChoiceButton");
     const newCardButton = document.getElementById("newCardButton");
     const cameraChoiceBox = document.getElementById("cameraChoiceBox");
     const cameraSelect = document.getElementById("cameraSelect");
@@ -402,6 +422,7 @@
     const progressSlider = document.getElementById("progressSlider");
     const elapsedTime = document.getElementById("elapsedTime");
     const remainingTime = document.getElementById("remainingTime");
+    const statusPanel = document.getElementById("statusPanel");
     const statusElement = document.getElementById("status");
     const cardIdElement = document.getElementById("cardId");
     const playerBox = document.getElementById("playerBox");
@@ -421,6 +442,12 @@
     function setStatus(message, type = "") {
       statusElement.textContent = message;
       statusElement.className = type;
+
+      if (type === "error" || type === "warning") {
+        statusPanel.classList.add("visible");
+      } else {
+        statusPanel.classList.remove("visible");
+      }
     }
 
     function normalizeText(value) {
@@ -694,7 +721,7 @@
       progressSlider.value = "0";
       elapsedTime.textContent = "0:00";
       remainingTime.textContent = "-0:30";
-      playPauseButton.textContent = "Pause";
+      playPauseButton.innerHTML = "&#10074;&#10074;";
 
       setStatus("Passende H\u00f6rprobe gefunden. Die Wiedergabe wird gestartet.", "success");
 
@@ -706,7 +733,7 @@
       try {
         await audioPlayer.play();
       } catch {
-        playPauseButton.textContent = "Starten";
+        playPauseButton.innerHTML = "&#9654;";
 
         setStatus(
           "Passende H\u00f6rprobe gefunden. Bitte auf Starten tippen.",
@@ -873,7 +900,11 @@
         cameraSelect.value = preferred.id;
       }
 
-      cameraChoiceBox.hidden = rearCameras.length < 2;
+      cameraChoiceButton.hidden = rearCameras.length < 2;
+
+      if (rearCameras.length < 2) {
+        cameraChoiceBox.hidden = true;
+      }
     }
 
     async function restartWithSelectedCamera() {
@@ -899,7 +930,7 @@
     function configureCameraControls() {
       activeVideoTrack = getActiveVideoTrack();
       torchEnabled = false;
-      torchButton.textContent = "Lampe";
+      torchButton.innerHTML = "&#128161;";
       torchButton.disabled = true;
 
       if (!activeVideoTrack || typeof activeVideoTrack.getCapabilities !== "function") {
@@ -927,11 +958,10 @@
           advanced: [{ torch: torchEnabled }]
         });
 
-        torchButton.textContent =
-          torchEnabled ? "Lampe aus" : "Lampe";
+        torchButton.innerHTML = torchEnabled ? "&#128161;" : "&#128161;";
       } catch {
         torchEnabled = false;
-        torchButton.textContent = "Lampe";
+        torchButton.innerHTML = "&#128161;";
         torchButton.disabled = true;
 
         setStatus(
@@ -945,7 +975,7 @@
       activeVideoTrack = null;
       torchEnabled = false;
       torchButton.disabled = true;
-      torchButton.textContent = "Lampe";
+      torchButton.innerHTML = "&#128161;";
     }
 
     async function stopScanner() {
@@ -975,7 +1005,7 @@
       progressSlider.value = "0";
       elapsedTime.textContent = "0:00";
       remainingTime.textContent = "-0:30";
-      playPauseButton.textContent = "Pause";
+      playPauseButton.innerHTML = "&#10074;&#10074;";
       scanLocked = false;
 
       cameraPanel.scrollIntoView({
@@ -1016,7 +1046,14 @@
 
     torchButton.addEventListener("click", toggleTorch);
 
-    cameraSelect.addEventListener("change", restartWithSelectedCamera);
+    cameraChoiceButton.addEventListener("click", () => {
+      cameraChoiceBox.hidden = !cameraChoiceBox.hidden;
+    });
+
+    cameraSelect.addEventListener("change", async () => {
+      cameraChoiceBox.hidden = true;
+      await restartWithSelectedCamera();
+    });
 
     newCardButton.addEventListener("click", prepareNextCard);
 
@@ -1028,7 +1065,8 @@
       if (audioPlayer.paused) {
         try {
           await audioPlayer.play();
-          playPauseButton.textContent = "Pause";
+          playPauseButton.innerHTML = "&#10074;&#10074;";
+          playPauseButton.setAttribute("aria-label", "Pause");
         } catch {
           setStatus(
             "Die H\u00f6rprobe konnte nicht gestartet werden.",
@@ -1037,7 +1075,8 @@
         }
       } else {
         audioPlayer.pause();
-        playPauseButton.textContent = "Weiter";
+        playPauseButton.innerHTML = "&#9654;";
+        playPauseButton.setAttribute("aria-label", "Weiter");
       }
     });
 
@@ -1058,12 +1097,14 @@
     audioPlayer.addEventListener("loadedmetadata", updatePlayerProgress);
 
     audioPlayer.addEventListener("play", () => {
-      playPauseButton.textContent = "Pause";
+      playPauseButton.innerHTML = "&#10074;&#10074;";
+      playPauseButton.setAttribute("aria-label", "Pause");
     });
 
     audioPlayer.addEventListener("pause", () => {
       if (!audioPlayer.ended && currentPreviewUrl) {
-        playPauseButton.textContent = "Weiter";
+        playPauseButton.innerHTML = "&#9654;";
+        playPauseButton.setAttribute("aria-label", "Weiter");
       }
     });
 
@@ -1077,7 +1118,8 @@
 
       try {
         await audioPlayer.play();
-        playPauseButton.textContent = "Pause";
+        playPauseButton.innerHTML = "&#10074;&#10074;";
+        playPauseButton.setAttribute("aria-label", "Pause");
 
         setStatus(
           "H\u00f6rprobe wird wiederholt.",
@@ -1097,7 +1139,8 @@
       if (currentPreviewUrl) {
         repeatButton.disabled = false;
         repeatButton.textContent = "Wiederholen";
-        playPauseButton.textContent = "Starten";
+        playPauseButton.innerHTML = "&#9654;";
+        playPauseButton.setAttribute("aria-label", "Starten");
         updatePlayerProgress();
 
         setStatus(
