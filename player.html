@@ -158,6 +158,23 @@
       line-height: 1.45;
     }
 
+    details.imprint {
+      margin-top: 14px;
+    }
+
+    details.imprint summary {
+      cursor: pointer;
+      font-size: 18px;
+      font-weight: 700;
+    }
+
+    .imprint-content {
+      margin-top: 12px;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.55;
+    }
+
     footer {
       padding: 20px 12px 32px;
       color: var(--muted);
@@ -202,19 +219,55 @@
       </div>
 
       <div class="technical-details">
-        Die Deezer-Vorschauadresse wird nur fÃ¼r die aktuelle H&ouml;rprobe verwendet und anschlieÃend entfernt.
+        Die Deezer-Vorschauadresse wird nur f&uuml;r die aktuelle H&ouml;rprobe verwendet und anschlie&szlig;end entfernt.
       </div>
+    </section>
+
+    <section class="panel">
+      <details class="imprint">
+        <summary>Impressum</summary>
+
+        <div class="imprint-content">
+          <p><strong>Angaben gem&auml;&szlig; &sect; 5 DDG</strong></p>
+
+          <p>
+            Dr. Harald Hanke<br>
+            Reutgrabenweg 14<br>
+            76297 Stutensee<br>
+            Deutschland
+          </p>
+
+          <p>
+            <strong>Kontakt</strong><br>
+            E-Mail:
+            <a href="mailto:harald@hanke.com">harald at hanke.com</a>
+          </p>
+
+          <p>
+            <strong>Verantwortlich f&uuml;r den Inhalt</strong><br>
+            Dr. Harald Hanke<br>
+            Reutgrabenweg 14<br>
+            76297 Stutensee
+          </p>
+
+          <p>
+            Dieses Angebot ist ein privates Musikquiz-Projekt.
+            Es besteht keine Verbindung zu Deezer, GitHub oder den
+            Rechteinhabern der genannten Filme und Musikst&uuml;cke.
+          </p>
+        </div>
+      </details>
     </section>
   </main>
 
   <footer>
-    HH Musikquiz Â· Die Titeldaten werden ausschlieÃlich zur Suche der aktuellen Deezer-H&ouml;rprobe verwendet.
+    HH Musikquiz &middot; Die Titeldaten werden ausschlie&szlig;lich zur Suche der aktuellen Deezer-H&ouml;rprobe verwendet.
   </footer>
 
   <script>
     "use strict";
 
-    const PLAYER_VERSION = 6;
+    const PLAYER_VERSION = 8;
     const QR_FORMAT_VERSION = 1;
     const SEARCH_LIMIT = 25;
     const REQUEST_TIMEOUT_MS = 15000;
@@ -231,7 +284,7 @@
     const playerBox = document.getElementById("playerBox");
     const audioPlayer = document.getElementById("audioPlayer");
 
-    headerTitle.textContent = `HH Musikquiz Player â Version ${PLAYER_VERSION}`;
+    headerTitle.textContent = `HH Musikquiz Player - Version ${PLAYER_VERSION}`;
 
     let qrScanner = null;
     let scannerRunning = false;
@@ -478,7 +531,7 @@
         .sort((a, b) => b.score - a.score);
 
       if (candidates.length === 0) {
-        throw new Error("Deezer hat keinen Treffer mit H&ouml;rprobe gefunden.");
+        throw new Error("Deezer hat keinen Treffer mit H\u00f6rprobe gefunden.");
       }
 
       const best = candidates[0];
@@ -494,7 +547,7 @@
       currentCard = card;
       cardIdElement.textContent = `Karten-ID: ${card.id}`;
 
-      setStatus("QR-Code g\u00fcltig. Deezer wird nach der aktuellen H&ouml;rprobe durchsucht.");
+      setStatus("QR-Code g\u00fcltig. Deezer wird nach der aktuellen H\u00f6rprobe durchsucht.");
 
       const searchText = buildSearchText(card);
       const results = await deezerSearchJsonp(searchText);
@@ -512,13 +565,13 @@
       discardButton.disabled = false;
       newCardButton.disabled = false;
 
-      setStatus("Passende H&ouml;rprobe gefunden. Die Wiedergabe wird gestartet.", "success");
+      setStatus("Passende H\u00f6rprobe gefunden. Die Wiedergabe wird gestartet.", "success");
 
       try {
         await audioPlayer.play();
       } catch {
         setStatus(
-          "Passende H&ouml;rprobe gefunden. Bitte auf âH&ouml;rprobe startenâ tippen.",
+          "Passende H\u00f6rprobe gefunden. Bitte auf \u201eH\u00f6rprobe starten\u201c tippen.",
           "warning"
         );
       }
@@ -534,7 +587,7 @@
       discardButton.disabled = true;
 
       if (showMessage) {
-        setStatus("Die H&ouml;rprobe wurde beendet und die Vorschauadresse verworfen.");
+        setStatus("Die H\u00f6rprobe wurde beendet und die Vorschauadresse verworfen.");
       }
     }
 
@@ -578,10 +631,18 @@
       }
 
       try {
+        const cameras = await Html5Qrcode.getCameras();
+
+        if (!cameras || cameras.length === 0) {
+          throw new Error("Es wurde keine Kamera gefunden.");
+        }
+
+        const preferredCamera =
+          cameras.find(camera => /back|rear|environment/i.test(camera.label)) ??
+          cameras[cameras.length - 1];
+
         await qrScanner.start(
-          {
-            facingMode: "environment"
-          },
+          preferredCamera.id,
           {
             fps: 10,
             qrbox: (viewfinderWidth, viewfinderHeight) => {
@@ -659,15 +720,15 @@
 
     playButton.addEventListener("click", async () => {
       if (!currentPreviewUrl) {
-        setStatus("Es ist keine H&ouml;rprobe geladen.", "error");
+        setStatus("Es ist keine H\u00f6rprobe geladen.", "error");
         return;
       }
 
       try {
         await audioPlayer.play();
-        setStatus("H&ouml;rprobe wird abgespielt.", "success");
+        setStatus("H\u00f6rprobe wird abgespielt.", "success");
       } catch {
-        setStatus("Die H&ouml;rprobe konnte nicht gestartet werden.", "error");
+        setStatus("Die H\u00f6rprobe konnte nicht gestartet werden.", "error");
       }
     });
 
@@ -679,7 +740,7 @@
       discardPreview(false);
 
       setStatus(
-        "H&ouml;rprobe beendet. Die Vorschauadresse wurde verworfen.",
+        "H\u00f6rprobe beendet. Die Vorschauadresse wurde verworfen.",
         "success"
       );
     });
@@ -689,7 +750,7 @@
         discardPreview(false);
 
         setStatus(
-          "Die H&ouml;rprobe konnte nicht geladen werden. Die Vorschauadresse wurde verworfen.",
+          "Die H\u00f6rprobe konnte nicht geladen werden. Die Vorschauadresse wurde verworfen.",
           "error"
         );
       }
