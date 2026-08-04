@@ -181,7 +181,7 @@
       <div class="button-row">
         <button id="startButton" type="button">Kamera starten</button>
         <button id="stopCameraButton" type="button" class="secondary" disabled>Kamera stoppen</button>
-        <button id="newCardButton" type="button" class="secondary" disabled>NÃ¤chste Karte</button>
+        <button id="newCardButton" type="button" class="secondary" disabled>N&auml;chste Karte</button>
       </div>
     </section>
 
@@ -192,29 +192,29 @@
     </section>
 
     <section id="playerBox" class="panel player-box">
-      <h2>HÃ¶rprobe</h2>
+      <h2>H&ouml;rprobe</h2>
 
       <audio id="audioPlayer" controls playsinline preload="none"></audio>
 
       <div class="button-row">
-        <button id="playButton" type="button" disabled>HÃ¶rprobe starten</button>
-        <button id="discardButton" type="button" class="danger" disabled>HÃ¶rprobe beenden</button>
+        <button id="playButton" type="button" disabled>H&ouml;rprobe starten</button>
+        <button id="discardButton" type="button" class="danger" disabled>H&ouml;rprobe beenden</button>
       </div>
 
       <div class="technical-details">
-        Die Deezer-Vorschauadresse wird nur fÃ¼r die aktuelle HÃ¶rprobe verwendet und anschlieÃend entfernt.
+        Die Deezer-Vorschauadresse wird nur fÃ¼r die aktuelle H&ouml;rprobe verwendet und anschlieÃend entfernt.
       </div>
     </section>
   </main>
 
   <footer>
-    HH Musikquiz Â· Die Titeldaten werden ausschlieÃlich zur Suche der aktuellen Deezer-HÃ¶rprobe verwendet.
+    HH Musikquiz Â· Die Titeldaten werden ausschlieÃlich zur Suche der aktuellen Deezer-H&ouml;rprobe verwendet.
   </footer>
 
   <script>
     "use strict";
 
-    const PLAYER_VERSION = 5;
+    const PLAYER_VERSION = 6;
     const QR_FORMAT_VERSION = 1;
     const SEARCH_LIMIT = 25;
     const REQUEST_TIMEOUT_MS = 15000;
@@ -283,7 +283,7 @@
 
     function validateQrPayload(rawText) {
       if (typeof rawText !== "string" || rawText.length > 2500) {
-        throw new Error("Der QR-Code enthÃ¤lt keine zulÃ¤ssigen Daten.");
+        throw new Error("Der QR-Code enth\u00e4lt keine zul\u00e4ssigen Daten.");
       }
 
       let data;
@@ -291,7 +291,7 @@
       try {
         data = JSON.parse(rawText);
       } catch {
-        throw new Error("Der QR-Code enthÃ¤lt kein gÃ¼ltiges JSON-Format.");
+        throw new Error("Der QR-Code enth\u00e4lt kein g\u00fcltiges JSON-Format.");
       }
 
       if (!data || typeof data !== "object" || Array.isArray(data)) {
@@ -302,12 +302,12 @@
 
       for (const key of Object.keys(data)) {
         if (!allowedKeys.has(key)) {
-          throw new Error(`UnzulÃ¤ssiges Datenfeld im QR-Code: ${key}`);
+          throw new Error(`Unzul\u00e4ssiges Datenfeld im QR-Code: ${key}`);
         }
       }
 
       if (data.v !== QR_FORMAT_VERSION) {
-        throw new Error(`Nicht unterstÃ¼tzte QR-Version: ${String(data.v)}`);
+        throw new Error(`Nicht unterst\u00fctzte QR-Version: ${String(data.v)}`);
       }
 
       const id = String(data.id ?? "").trim();
@@ -317,7 +317,7 @@
       const year = String(data.year ?? "").trim();
 
       if (!/^FILM-[A-HJ-NP-Z2-9]{6}$/.test(id)) {
-        throw new Error("Die Karten-ID ist ungÃ¼ltig.");
+        throw new Error("Die Karten-ID ist ung\u00fcltig.");
       }
 
       if (artist.length < 1 || artist.length > 150) {
@@ -333,7 +333,7 @@
       }
 
       if (year && !/^\d{4}$/.test(year)) {
-        throw new Error("Die Jahreszahl ist ungÃ¼ltig.");
+        throw new Error("Die Jahreszahl ist ung\u00fcltig.");
       }
 
       return {
@@ -478,7 +478,7 @@
         .sort((a, b) => b.score - a.score);
 
       if (candidates.length === 0) {
-        throw new Error("Deezer hat keinen Treffer mit HÃ¶rprobe gefunden.");
+        throw new Error("Deezer hat keinen Treffer mit H&ouml;rprobe gefunden.");
       }
 
       const best = candidates[0];
@@ -494,7 +494,7 @@
       currentCard = card;
       cardIdElement.textContent = `Karten-ID: ${card.id}`;
 
-      setStatus("QR-Code gÃ¼ltig. Deezer wird nach der aktuellen HÃ¶rprobe durchsucht.");
+      setStatus("QR-Code g\u00fcltig. Deezer wird nach der aktuellen H&ouml;rprobe durchsucht.");
 
       const searchText = buildSearchText(card);
       const results = await deezerSearchJsonp(searchText);
@@ -512,13 +512,13 @@
       discardButton.disabled = false;
       newCardButton.disabled = false;
 
-      setStatus("Passende HÃ¶rprobe gefunden. Die Wiedergabe wird gestartet.", "success");
+      setStatus("Passende H&ouml;rprobe gefunden. Die Wiedergabe wird gestartet.", "success");
 
       try {
         await audioPlayer.play();
       } catch {
         setStatus(
-          "Passende HÃ¶rprobe gefunden. Bitte auf âHÃ¶rprobe startenâ tippen.",
+          "Passende H&ouml;rprobe gefunden. Bitte auf âH&ouml;rprobe startenâ tippen.",
           "warning"
         );
       }
@@ -534,7 +534,7 @@
       discardButton.disabled = true;
 
       if (showMessage) {
-        setStatus("Die HÃ¶rprobe wurde beendet und die Vorschauadresse verworfen.");
+        setStatus("Die H&ouml;rprobe wurde beendet und die Vorschauadresse verworfen.");
       }
     }
 
@@ -578,18 +578,10 @@
       }
 
       try {
-        const cameras = await Html5Qrcode.getCameras();
-
-        if (!cameras || cameras.length === 0) {
-          throw new Error("Es wurde keine Kamera gefunden.");
-        }
-
-        const preferredCamera =
-          cameras.find(camera => /back|rear|environment|rÃ¼ck/i.test(camera.label)) ??
-          cameras[cameras.length - 1];
-
         await qrScanner.start(
-          preferredCamera.id,
+          {
+            facingMode: "environment"
+          },
           {
             fps: 10,
             qrbox: (viewfinderWidth, viewfinderHeight) => {
@@ -606,7 +598,7 @@
           },
           handleDecodedText,
           () => {
-            // Normale Lesefehler wÃ¤hrend des Suchens werden nicht angezeigt.
+            // Normale Lesefehler w\u00e4hrend des Suchens werden nicht angezeigt.
           }
         );
 
@@ -614,7 +606,7 @@
         startButton.disabled = true;
         stopCameraButton.disabled = false;
 
-        setStatus("Kamera aktiv. QR-Code vollstÃ¤ndig in den Rahmen halten.");
+        setStatus("Kamera aktiv. QR-Code vollst\u00e4ndig in den Rahmen halten.");
       } catch (error) {
         scannerRunning = false;
         startButton.disabled = false;
@@ -637,7 +629,7 @@
         await qrScanner.stop();
         await qrScanner.clear();
       } catch {
-        // Der Zustand wird trotzdem zurÃ¼ckgesetzt.
+        // Der Zustand wird trotzdem zur\u00fcckgesetzt.
       } finally {
         scannerRunning = false;
         startButton.disabled = false;
@@ -667,15 +659,15 @@
 
     playButton.addEventListener("click", async () => {
       if (!currentPreviewUrl) {
-        setStatus("Es ist keine HÃ¶rprobe geladen.", "error");
+        setStatus("Es ist keine H&ouml;rprobe geladen.", "error");
         return;
       }
 
       try {
         await audioPlayer.play();
-        setStatus("HÃ¶rprobe wird abgespielt.", "success");
+        setStatus("H&ouml;rprobe wird abgespielt.", "success");
       } catch {
-        setStatus("Die HÃ¶rprobe konnte nicht gestartet werden.", "error");
+        setStatus("Die H&ouml;rprobe konnte nicht gestartet werden.", "error");
       }
     });
 
@@ -687,7 +679,7 @@
       discardPreview(false);
 
       setStatus(
-        "HÃ¶rprobe beendet. Die Vorschauadresse wurde verworfen.",
+        "H&ouml;rprobe beendet. Die Vorschauadresse wurde verworfen.",
         "success"
       );
     });
@@ -697,7 +689,7 @@
         discardPreview(false);
 
         setStatus(
-          "Die HÃ¶rprobe konnte nicht geladen werden. Die Vorschauadresse wurde verworfen.",
+          "Die H&ouml;rprobe konnte nicht geladen werden. Die Vorschauadresse wurde verworfen.",
           "error"
         );
       }
