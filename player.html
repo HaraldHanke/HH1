@@ -107,6 +107,32 @@
       opacity: 0.45;
     }
 
+    .zoom-box {
+      margin-top: 14px;
+      padding: 12px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: #f8f8fa;
+    }
+
+    .zoom-box label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 700;
+    }
+
+    .zoom-box input[type="range"] {
+      width: calc(100% - 58px);
+      vertical-align: middle;
+    }
+
+    #zoomValue {
+      display: inline-block;
+      width: 52px;
+      text-align: right;
+      font-variant-numeric: tabular-nums;
+    }
+
     #status {
       min-height: 54px;
       padding: 12px;
@@ -198,7 +224,14 @@
       <div class="button-row">
         <button id="startButton" type="button">Kamera starten</button>
         <button id="stopCameraButton" type="button" class="secondary" disabled>Kamera stoppen</button>
+        <button id="torchButton" type="button" class="secondary" disabled>Lampe einschalten</button>
         <button id="newCardButton" type="button" class="secondary" disabled>N&auml;chste Karte</button>
+      </div>
+
+      <div id="zoomBox" class="zoom-box" hidden>
+        <label for="zoomSlider">Kamera-Zoom</label>
+        <input id="zoomSlider" type="range" min="1" max="1" step="0.1" value="1">
+        <span id="zoomValue">1,0x</span>
       </div>
     </section>
 
@@ -267,7 +300,7 @@
   <script>
     "use strict";
 
-    const PLAYER_VERSION = 8;
+    const PLAYER_VERSION = 9;
     const QR_FORMAT_VERSION = 1;
     const SEARCH_LIMIT = 25;
     const REQUEST_TIMEOUT_MS = 15000;
@@ -276,7 +309,11 @@
     const headerTitle = document.getElementById("headerTitle");
     const startButton = document.getElementById("startButton");
     const stopCameraButton = document.getElementById("stopCameraButton");
+    const torchButton = document.getElementById("torchButton");
     const newCardButton = document.getElementById("newCardButton");
+    const zoomBox = document.getElementById("zoomBox");
+    const zoomSlider = document.getElementById("zoomSlider");
+    const zoomValue = document.getElementById("zoomValue");
     const playButton = document.getElementById("playButton");
     const discardButton = document.getElementById("discardButton");
     const statusElement = document.getElementById("status");
@@ -291,6 +328,8 @@
     let scanLocked = false;
     let currentCard = null;
     let currentPreviewUrl = null;
+    let torchEnabled = false;
+    let activeVideoTrack = null;
 
     function setStatus(message, type = "") {
       statusElement.textContent = message;
@@ -647,7 +686,7 @@
             fps: 10,
             qrbox: (viewfinderWidth, viewfinderHeight) => {
               const size = Math.floor(
-                Math.min(viewfinderWidth, viewfinderHeight) * 0.72
+                Math.min(viewfinderWidth, viewfinderHeight) * 0.92
               );
 
               return {
@@ -667,7 +706,11 @@
         startButton.disabled = true;
         stopCameraButton.disabled = false;
 
-        setStatus("Kamera aktiv. QR-Code vollst\u00e4ndig in den Rahmen halten.");
+        configureCameraControls();
+
+        setStatus(
+          "Kamera aktiv. Der QR-Code darf fast das gesamte Bild ausf\u00fcllen."
+        );
       } catch (error) {
         scannerRunning = false;
         startButton.disabled = false;
@@ -679,6 +722,103 @@
           "error"
         );
       }
+    }
+
+    function getActiveVideoTrack() {
+      const video = document.querySelector("#reader video");
+
+      if (!video || !video.srcObject) {
+        return null;
+      }
+
+      const tracks = video.srcObject.getVideoTracks();
+      return tracks.length > 0 ? tracks[0] : null;
+    }
+
+    function configureCameraControls() {
+      activeVideoTrack = getActiveVideoTrack();
+      torchEnabled = false;
+      torchButton.textContent = "Lampe einschalten";
+      torchButton.disabled = true;
+      zoomBox.hidden = true;
+
+      if (!activeVideoTrack || typeof activeVideoTrack.getCapabilities !== "function") {
+        return;
+      }
+
+      const capabilities = activeVideoTrack.getCapabilities();
+
+      if (capabilities.torch) {
+        torchButton.disabled = false;
+      }
+
+      if (capabilities.zoom) {
+        const min = Number(capabilities.zoom.min ?? 1);
+        const max = Number(capabilities.zoom.max ?? min);
+        const step = Number(capabilities.zoom.step ?? 0.1);
+        const current = Number(activeVideoTrack.getSettings?.().zoom ?? min);
+
+        zoomSlider.min = String(min);
+        zoomSlider.max = String(max);
+        zoomSlider.step = String(step);
+        zoomSlider.value = String(current);
+        zoomValue.textContent = `${current.toFixed(1).replace(".", ",")}x`;
+        zoomBox.hidden = false;
+      }
+    }
+
+    async function setCameraZoom(value) {
+      if (!activeVideoTrack) {
+        return;
+      }
+
+      try {
+        await activeVideoTrack.applyConstraints({
+          advanced: [{ zoom: Number(value) }]
+        });
+
+        zoomValue.textContent =
+          `${Number(value).toFixed(1).replace(".", ",")}x`;
+      } catch {
+        setStatus(
+          "Der Kamerazoom wird von Safari auf diesem Ger\\u00e4t nicht unterst\\u00fctzt.",
+          "warning"
+        );
+      }
+    }
+
+    async function toggleTorch() {
+      if (!activeVideoTrack) {
+        return;
+      }
+
+      try {
+        torchEnabled = !torchEnabled;
+
+        await activeVideoTrack.applyConstraints({
+          advanced: [{ torch: torchEnabled }]
+        });
+
+        torchButton.textContent =
+          torchEnabled ? "Lampe ausschalten" : "Lampe einschalten";
+      } catch {
+        torchEnabled = false;
+        torchButton.textContent = "Lampe einschalten";
+        torchButton.disabled = true;
+
+        setStatus(
+          "Die Kameralampe kann in Safari auf diesem iPhone nicht geschaltet werden.",
+          "warning"
+        );
+      }
+    }
+
+    function resetCameraControls() {
+      activeVideoTrack = null;
+      torchEnabled = false;
+      torchButton.disabled = true;
+      torchButton.textContent = "Lampe einschalten";
+      zoomBox.hidden = true;
     }
 
     async function stopScanner() {
@@ -695,6 +835,7 @@
         scannerRunning = false;
         startButton.disabled = false;
         stopCameraButton.disabled = true;
+        resetCameraControls();
       }
     }
 
@@ -714,6 +855,12 @@
     stopCameraButton.addEventListener("click", async () => {
       await stopScanner();
       setStatus("Kamera gestoppt.");
+    });
+
+    torchButton.addEventListener("click", toggleTorch);
+
+    zoomSlider.addEventListener("input", event => {
+      setCameraZoom(event.target.value);
     });
 
     newCardButton.addEventListener("click", prepareNextCard);
