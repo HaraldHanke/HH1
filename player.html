@@ -9,140 +9,166 @@
 
   <style>
     :root {
-      --blue: #0a84ff;
-      --blue-dark: #0066cc;
-      --green: #248a3d;
-      --red: #c62828;
-      --orange: #b35a00;
-      --background: #f2f2f7;
+      --green: #22c55e;
+      --green-dark: #15803d;
+      --green-soft: #dcfce7;
+      --background: #f3f7f1;
       --card: #ffffff;
-      --text: #1c1c1e;
-      --muted: #6e6e73;
-      --border: #d1d1d6;
+      --text: #17321f;
+      --muted: #657268;
+      --border: #d8e3da;
+      --red: #dc2626;
+      --orange: #ea580c;
+      --shadow: 0 10px 28px rgba(32, 82, 47, 0.13);
     }
 
-    * {
-      box-sizing: border-box;
-    }
+    * { box-sizing: border-box; }
+
+    html { scroll-behavior: smooth; }
 
     body {
       margin: 0;
       min-height: 100vh;
       font-family: Arial, Helvetica, sans-serif;
       color: var(--text);
-      background: var(--background);
+      background:
+        radial-gradient(circle at top right, rgba(190, 242, 100, 0.34), transparent 34%),
+        linear-gradient(180deg, #f9fff6 0%, var(--background) 100%);
     }
 
     header {
-      padding: 18px 16px;
+      padding: 22px 16px 26px;
       color: white;
-      background: var(--blue);
+      background: linear-gradient(135deg, var(--green-dark), var(--green) 60%, #65d46e);
       text-align: center;
+      box-shadow: 0 6px 20px rgba(21, 128, 61, 0.26);
     }
 
     header h1 {
       margin: 0;
-      font-size: clamp(24px, 6vw, 34px);
+      font-size: clamp(25px, 6vw, 36px);
+      line-height: 1.12;
     }
 
     main {
-      width: min(720px, calc(100% - 24px));
-      margin: 18px auto 40px;
+      width: min(760px, calc(100% - 22px));
+      margin: 16px auto 38px;
     }
 
     .panel {
-      margin-bottom: 14px;
-      padding: 16px;
+      margin-bottom: 16px;
+      padding: 18px;
       background: var(--card);
       border: 1px solid var(--border);
-      border-radius: 14px;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+      border-radius: 20px;
+      box-shadow: var(--shadow);
     }
 
     .panel h2 {
-      margin: 0 0 12px;
-      font-size: 20px;
+      margin: 0 0 14px;
+      font-size: 22px;
     }
+
+    .camera-panel.compact { display: none; }
 
     #reader {
       width: 100%;
+      min-height: 390px;
       overflow: hidden;
-      border-radius: 12px;
+      border-radius: 18px;
+      background: #061008;
     }
 
-    .button-row {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-      margin-top: 14px;
+    #reader video {
+      width: 100% !important;
+      min-height: 390px;
+      object-fit: cover;
+      border-radius: 18px;
     }
 
     button {
-      min-height: 46px;
-      padding: 11px 16px;
+      min-height: 50px;
+      padding: 12px 18px;
       border: 0;
-      border-radius: 10px;
+      border-radius: 14px;
       color: white;
-      background: var(--blue);
-      font-size: 16px;
-      font-weight: 700;
+      background: var(--green);
+      font-size: 17px;
+      font-weight: 800;
       cursor: pointer;
-    }
-
-    button:hover {
-      background: var(--blue-dark);
+      box-shadow: 0 5px 14px rgba(34, 197, 94, 0.22);
     }
 
     button.secondary {
       color: var(--text);
-      background: #e5e5ea;
-    }
-
-    button.danger {
-      background: var(--red);
+      background: #edf5ee;
+      box-shadow: none;
     }
 
     button:disabled {
       cursor: not-allowed;
-      opacity: 0.45;
+      opacity: 0.42;
+      box-shadow: none;
+    }
+
+    .camera-actions {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 10px;
+      margin-top: 14px;
+    }
+
+    .primary-large {
+      width: 100%;
+      min-height: 62px;
+      font-size: 21px;
+      border-radius: 17px;
+    }
+
+    .small-button {
+      min-width: 82px;
+      padding: 10px 12px;
+      font-size: 14px;
     }
 
     .camera-choice {
-      margin-top: 14px;
-      padding: 12px;
+      margin-top: 12px;
+      padding: 10px 12px;
       border: 1px solid var(--border);
-      border-radius: 10px;
-      background: #f8f8fa;
+      border-radius: 12px;
+      background: #f8fbf8;
     }
 
     .camera-choice label {
       display: block;
-      margin-bottom: 8px;
+      margin-bottom: 6px;
+      color: var(--muted);
+      font-size: 13px;
       font-weight: 700;
     }
 
     .camera-choice select {
       width: 100%;
-      min-height: 44px;
+      min-height: 42px;
       padding: 8px 10px;
       border: 1px solid var(--border);
-      border-radius: 8px;
+      border-radius: 9px;
       background: white;
-      font-size: 16px;
+      font-size: 15px;
     }
 
     #status {
       min-height: 54px;
-      padding: 12px;
-      border-left: 5px solid var(--blue);
-      border-radius: 8px;
-      background: #eef6ff;
+      padding: 13px 14px;
+      border-left: 6px solid var(--green);
+      border-radius: 10px;
+      background: var(--green-soft);
       line-height: 1.45;
     }
 
     #status.success {
-      border-color: var(--green);
-      background: #eef8f0;
+      border-color: var(--green-dark);
+      background: #e8f9eb;
     }
 
     #status.error {
@@ -156,40 +182,67 @@
     }
 
     .card-id {
-      margin-top: 10px;
+      margin-top: 9px;
       color: var(--muted);
       font-size: 13px;
-      overflow-wrap: anywhere;
     }
 
-    .player-box {
-      display: none;
-    }
+    .player-box { display: none; }
 
     .player-box.visible {
       display: block;
+      border: 2px solid var(--green);
+      background: linear-gradient(180deg, #ffffff 0%, #f7fff5 100%);
     }
 
-    audio {
+    .player-main-button {
       width: 100%;
-      margin-top: 8px;
+      min-height: 68px;
+      font-size: 23px;
+      border-radius: 18px;
+      background: linear-gradient(135deg, var(--green-dark), var(--green));
+    }
+
+    .progress-wrap { margin-top: 18px; }
+
+    #progressSlider {
+      width: 100%;
+      accent-color: var(--green);
+    }
+
+    .time-row {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 5px;
+      color: var(--muted);
+      font-size: 13px;
+      font-variant-numeric: tabular-nums;
+    }
+
+    #repeatButton {
+      width: 100%;
+      margin-top: 14px;
+    }
+
+    #newCardButton {
+      width: 100%;
+      min-height: 64px;
+      margin-top: 12px;
+      font-size: 21px;
+      background: linear-gradient(135deg, #15803d, #22c55e 62%, #84cc16);
     }
 
     .technical-details {
-      margin-top: 14px;
+      margin-top: 12px;
       color: var(--muted);
-      font-size: 13px;
+      font-size: 12px;
       line-height: 1.45;
-    }
-
-    details.imprint {
-      margin-top: 14px;
     }
 
     details.imprint summary {
       cursor: pointer;
       font-size: 18px;
-      font-weight: 700;
+      font-weight: 800;
     }
 
     .imprint-content {
@@ -199,11 +252,18 @@
       line-height: 1.55;
     }
 
+    .imprint-content a { color: var(--green-dark); }
+
     footer {
-      padding: 20px 12px 32px;
+      padding: 18px 12px 30px;
       color: var(--muted);
       text-align: center;
       font-size: 12px;
+    }
+
+    @media (max-width: 520px) {
+      #reader, #reader video { min-height: 440px; }
+      .panel { padding: 16px; }
     }
   </style>
 </head>
@@ -214,19 +274,23 @@
   </header>
 
   <main>
-    <section class="panel">
+    <section id="cameraPanel" class="panel camera-panel">
       <h2>QR-Code scannen</h2>
 
       <div id="reader"></div>
 
-      <div class="button-row">
-        <button id="startButton" type="button">Kamera starten</button>
-        <button id="torchButton" type="button" class="secondary" disabled>Lampe einschalten</button>
-        <button id="newCardButton" type="button" class="secondary" disabled>N&auml;chste Karte</button>
+      <div class="camera-actions">
+        <button id="startButton" type="button" class="primary-large">
+          Kamera starten
+        </button>
+
+        <button id="torchButton" type="button" class="secondary small-button" disabled>
+          Lampe
+        </button>
       </div>
 
       <div id="cameraChoiceBox" class="camera-choice" hidden>
-        <label for="cameraSelect">Kamera ausw&auml;hlen</label>
+        <label for="cameraSelect">R&uuml;ckkamera</label>
         <select id="cameraSelect"></select>
       </div>
     </section>
@@ -240,16 +304,39 @@
     <section id="playerBox" class="panel player-box">
       <h2>H&ouml;rprobe</h2>
 
-      <audio id="audioPlayer" controls playsinline preload="none"></audio>
+      <audio id="audioPlayer" playsinline preload="none"></audio>
 
-      <div class="button-row">
-        <button id="repeatButton" type="button" class="secondary" disabled>
-          Wiederholen
-        </button>
+      <button id="playPauseButton" type="button" class="player-main-button">
+        Pause
+      </button>
+
+      <div class="progress-wrap">
+        <input
+          id="progressSlider"
+          type="range"
+          min="0"
+          max="100"
+          step="0.1"
+          value="0"
+          aria-label="Abspielposition">
+
+        <div class="time-row">
+          <span id="elapsedTime">0:00</span>
+          <span id="remainingTime">-0:30</span>
+        </div>
       </div>
 
+      <button id="repeatButton" type="button" class="secondary" disabled>
+        Wiederholen
+      </button>
+
+      <button id="newCardButton" type="button" disabled>
+        N&auml;chste Karte
+      </button>
+
       <div class="technical-details">
-        Die Deezer-Vorschauadresse wird nur f&uuml;r die aktuelle H&ouml;rprobe verwendet und anschlie&szlig;end entfernt.
+        Die Deezer-Vorschauadresse wird nur f&uuml;r die aktuelle H&ouml;rprobe
+        verwendet und beim Wechsel zur n&auml;chsten Karte entfernt.
       </div>
     </section>
 
@@ -297,19 +384,24 @@
   <script>
     "use strict";
 
-    const PLAYER_VERSION = 12;
+    const PLAYER_VERSION = 13;
     const QR_FORMAT_VERSION = 1;
     const SEARCH_LIMIT = 25;
     const REQUEST_TIMEOUT_MS = 15000;
     const MIN_ACCEPTABLE_SCORE = 52;
 
     const headerTitle = document.getElementById("headerTitle");
+    const cameraPanel = document.getElementById("cameraPanel");
     const startButton = document.getElementById("startButton");
     const torchButton = document.getElementById("torchButton");
     const newCardButton = document.getElementById("newCardButton");
     const cameraChoiceBox = document.getElementById("cameraChoiceBox");
     const cameraSelect = document.getElementById("cameraSelect");
     const repeatButton = document.getElementById("repeatButton");
+    const playPauseButton = document.getElementById("playPauseButton");
+    const progressSlider = document.getElementById("progressSlider");
+    const elapsedTime = document.getElementById("elapsedTime");
+    const remainingTime = document.getElementById("remainingTime");
     const statusElement = document.getElementById("status");
     const cardIdElement = document.getElementById("cardId");
     const playerBox = document.getElementById("playerBox");
@@ -594,18 +686,30 @@
       audioPlayer.src = currentPreviewUrl;
       audioPlayer.load();
 
+      cameraPanel.classList.add("compact");
       playerBox.classList.add("visible");
       repeatButton.disabled = true;
       repeatButton.textContent = "Wiederholen";
       newCardButton.disabled = false;
+      progressSlider.value = "0";
+      elapsedTime.textContent = "0:00";
+      remainingTime.textContent = "-0:30";
+      playPauseButton.textContent = "Pause";
 
       setStatus("Passende H\u00f6rprobe gefunden. Die Wiedergabe wird gestartet.", "success");
+
+      playerBox.scrollIntoView({
+        behavior: "smooth",
+        block: "start"
+      });
 
       try {
         await audioPlayer.play();
       } catch {
+        playPauseButton.textContent = "Starten";
+
         setStatus(
-          "Passende H\u00f6rprobe gefunden. Bitte auf \u201eH\u00f6rprobe starten\u201c tippen.",
+          "Passende H\u00f6rprobe gefunden. Bitte auf Starten tippen.",
           "warning"
         );
       }
@@ -795,7 +899,7 @@
     function configureCameraControls() {
       activeVideoTrack = getActiveVideoTrack();
       torchEnabled = false;
-      torchButton.textContent = "Lampe einschalten";
+      torchButton.textContent = "Lampe";
       torchButton.disabled = true;
 
       if (!activeVideoTrack || typeof activeVideoTrack.getCapabilities !== "function") {
@@ -824,10 +928,10 @@
         });
 
         torchButton.textContent =
-          torchEnabled ? "Lampe ausschalten" : "Lampe einschalten";
+          torchEnabled ? "Lampe aus" : "Lampe";
       } catch {
         torchEnabled = false;
-        torchButton.textContent = "Lampe einschalten";
+        torchButton.textContent = "Lampe";
         torchButton.disabled = true;
 
         setStatus(
@@ -841,7 +945,7 @@
       activeVideoTrack = null;
       torchEnabled = false;
       torchButton.disabled = true;
-      torchButton.textContent = "Lampe einschalten";
+      torchButton.textContent = "Lampe";
     }
 
     async function stopScanner() {
@@ -866,10 +970,46 @@
       currentCard = null;
       cardIdElement.textContent = "";
       playerBox.classList.remove("visible");
+      cameraPanel.classList.remove("compact");
       newCardButton.disabled = true;
+      progressSlider.value = "0";
+      elapsedTime.textContent = "0:00";
+      remainingTime.textContent = "-0:30";
+      playPauseButton.textContent = "Pause";
       scanLocked = false;
 
+      cameraPanel.scrollIntoView({
+        behavior: "smooth",
+        block: "start"
+      });
+
       await startScanner();
+    }
+
+    function formatTime(seconds) {
+      if (!Number.isFinite(seconds) || seconds < 0) {
+        return "0:00";
+      }
+
+      const wholeSeconds = Math.floor(seconds);
+      const minutes = Math.floor(wholeSeconds / 60);
+      const remainder = String(wholeSeconds % 60).padStart(2, "0");
+
+      return `${minutes}:${remainder}`;
+    }
+
+    function updatePlayerProgress() {
+      const duration = audioPlayer.duration;
+      const current = audioPlayer.currentTime;
+
+      if (!Number.isFinite(duration) || duration <= 0) {
+        return;
+      }
+
+      progressSlider.value = String((current / duration) * 100);
+      elapsedTime.textContent = formatTime(current);
+      remainingTime.textContent =
+        `-${formatTime(Math.max(0, duration - current))}`;
     }
 
     startButton.addEventListener("click", startScanner);
@@ -879,6 +1019,53 @@
     cameraSelect.addEventListener("change", restartWithSelectedCamera);
 
     newCardButton.addEventListener("click", prepareNextCard);
+
+    playPauseButton.addEventListener("click", async () => {
+      if (!currentPreviewUrl) {
+        return;
+      }
+
+      if (audioPlayer.paused) {
+        try {
+          await audioPlayer.play();
+          playPauseButton.textContent = "Pause";
+        } catch {
+          setStatus(
+            "Die H\u00f6rprobe konnte nicht gestartet werden.",
+            "error"
+          );
+        }
+      } else {
+        audioPlayer.pause();
+        playPauseButton.textContent = "Weiter";
+      }
+    });
+
+    progressSlider.addEventListener("input", () => {
+      const duration = audioPlayer.duration;
+
+      if (!Number.isFinite(duration) || duration <= 0) {
+        return;
+      }
+
+      audioPlayer.currentTime =
+        (Number(progressSlider.value) / 100) * duration;
+
+      updatePlayerProgress();
+    });
+
+    audioPlayer.addEventListener("timeupdate", updatePlayerProgress);
+    audioPlayer.addEventListener("loadedmetadata", updatePlayerProgress);
+
+    audioPlayer.addEventListener("play", () => {
+      playPauseButton.textContent = "Pause";
+    });
+
+    audioPlayer.addEventListener("pause", () => {
+      if (!audioPlayer.ended && currentPreviewUrl) {
+        playPauseButton.textContent = "Weiter";
+      }
+    });
 
     repeatButton.addEventListener("click", async () => {
       if (!currentPreviewUrl) {
@@ -890,6 +1077,7 @@
 
       try {
         await audioPlayer.play();
+        playPauseButton.textContent = "Pause";
 
         setStatus(
           "H\u00f6rprobe wird wiederholt.",
@@ -909,6 +1097,8 @@
       if (currentPreviewUrl) {
         repeatButton.disabled = false;
         repeatButton.textContent = "Wiederholen";
+        playPauseButton.textContent = "Starten";
+        updatePlayerProgress();
 
         setStatus(
           "H\u00f6rprobe beendet. Sie kann beliebig oft wiederholt werden.",
