@@ -107,7 +107,7 @@
       opacity: 0.45;
     }
 
-    .zoom-box {
+    .camera-choice {
       margin-top: 14px;
       padding: 12px;
       border: 1px solid var(--border);
@@ -115,22 +115,20 @@
       background: #f8f8fa;
     }
 
-    .zoom-box label {
+    .camera-choice label {
       display: block;
       margin-bottom: 8px;
       font-weight: 700;
     }
 
-    .zoom-box input[type="range"] {
-      width: calc(100% - 58px);
-      vertical-align: middle;
-    }
-
-    #zoomValue {
-      display: inline-block;
-      width: 52px;
-      text-align: right;
-      font-variant-numeric: tabular-nums;
+    .camera-choice select {
+      width: 100%;
+      min-height: 44px;
+      padding: 8px 10px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: white;
+      font-size: 16px;
     }
 
     #status {
@@ -228,10 +226,9 @@
         <button id="newCardButton" type="button" class="secondary" disabled>N&auml;chste Karte</button>
       </div>
 
-      <div id="zoomBox" class="zoom-box" hidden>
-        <label for="zoomSlider">Kamera-Zoom</label>
-        <input id="zoomSlider" type="range" min="1" max="1" step="0.1" value="1">
-        <span id="zoomValue">1,0x</span>
+      <div id="cameraChoiceBox" class="camera-choice" hidden>
+        <label for="cameraSelect">Kamera ausw&auml;hlen</label>
+        <select id="cameraSelect"></select>
       </div>
     </section>
 
@@ -300,7 +297,7 @@
   <script>
     "use strict";
 
-    const PLAYER_VERSION = 9;
+    const PLAYER_VERSION = 10;
     const QR_FORMAT_VERSION = 1;
     const SEARCH_LIMIT = 25;
     const REQUEST_TIMEOUT_MS = 15000;
@@ -311,9 +308,8 @@
     const stopCameraButton = document.getElementById("stopCameraButton");
     const torchButton = document.getElementById("torchButton");
     const newCardButton = document.getElementById("newCardButton");
-    const zoomBox = document.getElementById("zoomBox");
-    const zoomSlider = document.getElementById("zoomSlider");
-    const zoomValue = document.getElementById("zoomValue");
+    const cameraChoiceBox = document.getElementById("cameraChoiceBox");
+    const cameraSelect = document.getElementById("cameraSelect");
     const playButton = document.getElementById("playButton");
     const discardButton = document.getElementById("discardButton");
     const statusElement = document.getElementById("status");
@@ -330,6 +326,7 @@
     let currentPreviewUrl = null;
     let torchEnabled = false;
     let activeVideoTrack = null;
+    let availableCameras = [];
 
     function setStatus(message, type = "") {
       statusElement.textContent = message;
@@ -670,31 +667,23 @@
       }
 
       try {
-        const cameras = await Html5Qrcode.getCameras();
+        availableCameras = await Html5Qrcode.getCameras();
 
-        if (!cameras || cameras.length === 0) {
+        if (!availableCameras || availableCameras.length === 0) {
           throw new Error("Es wurde keine Kamera gefunden.");
         }
 
-        const preferredCamera =
-          cameras.find(camera => /back|rear|environment/i.test(camera.label)) ??
-          cameras[cameras.length - 1];
+        fillCameraSelection(availableCameras);
+
+        const selectedId =
+          cameraSelect.value ||
+          choosePreferredCamera(availableCameras).id;
 
         await qrScanner.start(
-          preferredCamera.id,
+          selectedId,
           {
-            fps: 10,
-            qrbox: (viewfinderWidth, viewfinderHeight) => {
-              const size = Math.floor(
-                Math.min(viewfinderWidth, viewfinderHeight) * 0.92
-              );
-
-              return {
-                width: size,
-                height: size
-              };
-            },
-            aspectRatio: 1
+            fps: 12,
+            disableFlip: false
           },
           handleDecodedText,
           () => {
@@ -709,7 +698,7 @@
         configureCameraControls();
 
         setStatus(
-          "Kamera aktiv. Der QR-Code darf fast das gesamte Bild ausf\u00fcllen."
+          "Kamera aktiv. Der gesamte sichtbare Bereich wird nach QR-Codes durchsucht."
         );
       } catch (error) {
         scannerRunning = false;
@@ -722,6 +711,56 @@
           "error"
         );
       }
+    }
+
+    function choosePreferredCamera(cameras) {
+      const ultraWide =
+        cameras.find(camera =>
+          /ultra|wide|weitwinkel|0\.5/i.test(camera.label)
+        );
+
+      if (ultraWide) {
+        return ultraWide;
+      }
+
+      const backCamera =
+        cameras.find(camera =>
+          /back|rear|environment|r\u00fcck/i.test(camera.label)
+        );
+
+      return backCamera ?? cameras[cameras.length - 1];
+    }
+
+    function fillCameraSelection(cameras) {
+      const previousValue = cameraSelect.value;
+      cameraSelect.innerHTML = "";
+
+      cameras.forEach((camera, index) => {
+        const option = document.createElement("option");
+        option.value = camera.id;
+        option.textContent =
+          camera.label || `Kamera ${index + 1}`;
+        cameraSelect.appendChild(option);
+      });
+
+      const preferred = choosePreferredCamera(cameras);
+
+      if (previousValue && cameras.some(camera => camera.id === previousValue)) {
+        cameraSelect.value = previousValue;
+      } else {
+        cameraSelect.value = preferred.id;
+      }
+
+      cameraChoiceBox.hidden = cameras.length < 2;
+    }
+
+    async function restartWithSelectedCamera() {
+      if (!scannerRunning) {
+        return;
+      }
+
+      await stopScanner();
+      await startScanner();
     }
 
     function getActiveVideoTrack() {
@@ -740,7 +779,6 @@
       torchEnabled = false;
       torchButton.textContent = "Lampe einschalten";
       torchButton.disabled = true;
-      zoomBox.hidden = true;
 
       if (!activeVideoTrack || typeof activeVideoTrack.getCapabilities !== "function") {
         return;
@@ -752,39 +790,7 @@
         torchButton.disabled = false;
       }
 
-      if (capabilities.zoom) {
-        const min = Number(capabilities.zoom.min ?? 1);
-        const max = Number(capabilities.zoom.max ?? min);
-        const step = Number(capabilities.zoom.step ?? 0.1);
-        const current = Number(activeVideoTrack.getSettings?.().zoom ?? min);
 
-        zoomSlider.min = String(min);
-        zoomSlider.max = String(max);
-        zoomSlider.step = String(step);
-        zoomSlider.value = String(current);
-        zoomValue.textContent = `${current.toFixed(1).replace(".", ",")}x`;
-        zoomBox.hidden = false;
-      }
-    }
-
-    async function setCameraZoom(value) {
-      if (!activeVideoTrack) {
-        return;
-      }
-
-      try {
-        await activeVideoTrack.applyConstraints({
-          advanced: [{ zoom: Number(value) }]
-        });
-
-        zoomValue.textContent =
-          `${Number(value).toFixed(1).replace(".", ",")}x`;
-      } catch {
-        setStatus(
-          "Der Kamerazoom wird von Safari auf diesem Ger\\u00e4t nicht unterst\\u00fctzt.",
-          "warning"
-        );
-      }
     }
 
     async function toggleTorch() {
@@ -818,7 +824,6 @@
       torchEnabled = false;
       torchButton.disabled = true;
       torchButton.textContent = "Lampe einschalten";
-      zoomBox.hidden = true;
     }
 
     async function stopScanner() {
@@ -859,9 +864,7 @@
 
     torchButton.addEventListener("click", toggleTorch);
 
-    zoomSlider.addEventListener("input", event => {
-      setCameraZoom(event.target.value);
-    });
+    cameraSelect.addEventListener("change", restartWithSelectedCamera);
 
     newCardButton.addEventListener("click", prepareNextCard);
 
