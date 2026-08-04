@@ -4,43 +4,712 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>HH Musikquiz Player</title>
+
+  <script src="https://cdn.jsdelivr.net/npm/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+
   <style>
-    :root{--blue:#0a84ff;--blue-dark:#0066cc;--green:#248a3d;--red:#c62828;--orange:#b35a00;--background:#f2f2f7;--card:#fff;--text:#1c1c1e;--muted:#6e6e73;--border:#d1d1d6}
-    *{box-sizing:border-box} body{margin:0;min-height:100vh;font-family:Arial,Helvetica,sans-serif;color:var(--text);background:var(--background)}
-    header{padding:18px 16px;color:#fff;background:var(--blue);text-align:center} header h1{margin:0;font-size:clamp(24px,6vw,34px)}
-    main{width:min(720px,calc(100% - 24px));margin:18px auto 40px}.panel{margin-bottom:14px;padding:16px;background:var(--card);border:1px solid var(--border);border-radius:14px;box-shadow:0 2px 8px rgba(0,0,0,.05)}
-    .panel h2{margin:0 0 12px;font-size:20px} label{display:block;margin:12px 0 5px;font-weight:700} input{width:100%;min-height:46px;padding:10px 12px;border:1px solid var(--border);border-radius:9px;font-size:16px}
-    button{width:100%;min-height:48px;margin-top:14px;padding:11px 16px;border:0;border-radius:10px;color:#fff;background:var(--blue);font-size:17px;font-weight:700;cursor:pointer} button:hover{background:var(--blue-dark)} button:disabled{cursor:not-allowed;opacity:.45}
-    #status{min-height:54px;padding:12px;border-left:5px solid var(--blue);border-radius:8px;background:#eef6ff;line-height:1.45} #status.success{border-color:var(--green);background:#eef8f0} #status.error{border-color:var(--red);background:#fff0f0} #status.warning{border-color:var(--orange);background:#fff7e8}
-    .result{margin-top:12px;padding:12px;border:1px solid var(--border);border-radius:10px}.result strong{display:block;margin-bottom:4px}.result-meta,.small{color:var(--muted);font-size:13px;line-height:1.45} audio{width:100%;margin-top:10px}
+    :root {
+      --blue: #0a84ff;
+      --blue-dark: #0066cc;
+      --green: #248a3d;
+      --red: #c62828;
+      --orange: #b35a00;
+      --background: #f2f2f7;
+      --card: #ffffff;
+      --text: #1c1c1e;
+      --muted: #6e6e73;
+      --border: #d1d1d6;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: Arial, Helvetica, sans-serif;
+      color: var(--text);
+      background: var(--background);
+    }
+
+    header {
+      padding: 18px 16px;
+      color: white;
+      background: var(--blue);
+      text-align: center;
+    }
+
+    header h1 {
+      margin: 0;
+      font-size: clamp(24px, 6vw, 34px);
+    }
+
+    main {
+      width: min(720px, calc(100% - 24px));
+      margin: 18px auto 40px;
+    }
+
+    .panel {
+      margin-bottom: 14px;
+      padding: 16px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    }
+
+    .panel h2 {
+      margin: 0 0 12px;
+      font-size: 20px;
+    }
+
+    #reader {
+      width: 100%;
+      overflow: hidden;
+      border-radius: 12px;
+    }
+
+    .button-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 14px;
+    }
+
+    button {
+      min-height: 46px;
+      padding: 11px 16px;
+      border: 0;
+      border-radius: 10px;
+      color: white;
+      background: var(--blue);
+      font-size: 16px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background: var(--blue-dark);
+    }
+
+    button.secondary {
+      color: var(--text);
+      background: #e5e5ea;
+    }
+
+    button.danger {
+      background: var(--red);
+    }
+
+    button:disabled {
+      cursor: not-allowed;
+      opacity: 0.45;
+    }
+
+    #status {
+      min-height: 54px;
+      padding: 12px;
+      border-left: 5px solid var(--blue);
+      border-radius: 8px;
+      background: #eef6ff;
+      line-height: 1.45;
+    }
+
+    #status.success {
+      border-color: var(--green);
+      background: #eef8f0;
+    }
+
+    #status.error {
+      border-color: var(--red);
+      background: #fff0f0;
+    }
+
+    #status.warning {
+      border-color: var(--orange);
+      background: #fff7e8;
+    }
+
+    .card-id {
+      margin-top: 10px;
+      color: var(--muted);
+      font-size: 13px;
+      overflow-wrap: anywhere;
+    }
+
+    .player-box {
+      display: none;
+    }
+
+    .player-box.visible {
+      display: block;
+    }
+
+    audio {
+      width: 100%;
+      margin-top: 8px;
+    }
+
+    .technical-details {
+      margin-top: 14px;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.45;
+    }
+
+    footer {
+      padding: 20px 12px 32px;
+      color: var(--muted);
+      text-align: center;
+      font-size: 12px;
+    }
   </style>
 </head>
+
 <body>
-  <header><h1 id="headerTitle">HH Musikquiz Player</h1></header>
+  <header>
+    <h1 id="headerTitle">HH Musikquiz Player</h1>
+  </header>
+
   <main>
     <section class="panel">
-      <h2>Deezer-Verbindung testen</h2>
-      <label for="artist">Interpret</label><input id="artist" type="text" value="Celine Dion" maxlength="150">
-      <label for="title">Titel</label><input id="title" type="text" value="My Heart Will Go On" maxlength="200">
-      <label for="version">Version, optional</label><input id="version" type="text" value="" maxlength="150">
-      <button id="searchButton" type="button">Bei Deezer suchen</button>
+      <h2>QR-Code scannen</h2>
+
+      <div id="reader"></div>
+
+      <div class="button-row">
+        <button id="startButton" type="button">Kamera starten</button>
+        <button id="stopCameraButton" type="button" class="secondary" disabled>Kamera stoppen</button>
+        <button id="newCardButton" type="button" class="secondary" disabled>NÃ¤chste Karte</button>
+      </div>
     </section>
-    <section class="panel"><h2>Status</h2><div id="status">Bereit fÃ¼r den Deezer-Test.</div></section>
-    <section class="panel"><h2>Suchergebnisse</h2><div id="results" class="small">Noch keine Suche ausgefÃ¼hrt.</div></section>
+
+    <section class="panel">
+      <h2>Status</h2>
+      <div id="status">Bereit. Bitte die Kamera starten und einen QR-Code scannen.</div>
+      <div id="cardId" class="card-id"></div>
+    </section>
+
+    <section id="playerBox" class="panel player-box">
+      <h2>HÃ¶rprobe</h2>
+
+      <audio id="audioPlayer" controls playsinline preload="none"></audio>
+
+      <div class="button-row">
+        <button id="playButton" type="button" disabled>HÃ¶rprobe starten</button>
+        <button id="discardButton" type="button" class="danger" disabled>HÃ¶rprobe beenden</button>
+      </div>
+
+      <div class="technical-details">
+        Die Deezer-Vorschauadresse wird nur fÃ¼r die aktuelle HÃ¶rprobe verwendet und anschlieÃend entfernt.
+      </div>
+    </section>
   </main>
+
+  <footer>
+    HH Musikquiz Â· Die Titeldaten werden ausschlieÃlich zur Suche der aktuellen Deezer-HÃ¶rprobe verwendet.
+  </footer>
+
   <script>
     "use strict";
-    const PLAYER_VERSION=4,MAX_RESULTS=10,REQUEST_TIMEOUT_MS=15000;
-    const headerTitle=document.getElementById("headerTitle"),artistInput=document.getElementById("artist"),titleInput=document.getElementById("title"),versionInput=document.getElementById("version"),searchButton=document.getElementById("searchButton"),statusElement=document.getElementById("status"),resultsElement=document.getElementById("results");
-    headerTitle.textContent=`HH Musikquiz Player â Version ${PLAYER_VERSION}`;
-    function setStatus(message,type=""){statusElement.textContent=message;statusElement.className=type}
-    function escapeHtml(value){return String(value??"").replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;").replaceAll("'","&#039;")}
-    function validateInput(){const artist=artistInput.value.trim(),title=titleInput.value.trim(),version=versionInput.value.trim();if(!artist)throw new Error("Bitte einen Interpreten eingeben.");if(!title)throw new Error("Bitte einen Titel eingeben.");if(artist.length>150||title.length>200||version.length>150)throw new Error("Eine Eingabe ist zu lang.");return{artist,title,version}}
-    function deezerSearchJsonp(searchText){return new Promise((resolve,reject)=>{const callbackName=`hhDeezerCallback_${Date.now()}_${Math.random().toString(36).slice(2)}`,script=document.createElement("script"),timeout=window.setTimeout(()=>{cleanup();reject(new Error("Deezer hat innerhalb von 15 Sekunden nicht geantwortet."))},REQUEST_TIMEOUT_MS);function cleanup(){window.clearTimeout(timeout);try{delete window[callbackName]}catch{window[callbackName]=undefined}script.remove()}window[callbackName]=data=>{cleanup();if(!data||!Array.isArray(data.data)){reject(new Error("Deezer hat keine verwertbare Antwort geliefert."));return}resolve(data.data)};script.onerror=()=>{cleanup();reject(new Error("Die Deezer-Suche konnte nicht geladen werden."))};const params=new URLSearchParams({q:searchText,limit:String(MAX_RESULTS),output:"jsonp",callback:callbackName});script.src=`https://api.deezer.com/search?${params.toString()}`;script.async=true;script.referrerPolicy="no-referrer";document.head.appendChild(script)})}
-    function discardAllPreviews(){document.querySelectorAll("audio").forEach(audio=>{audio.pause();audio.removeAttribute("src");audio.load()})}
-    function renderResults(results){discardAllPreviews();if(results.length===0){resultsElement.innerHTML='<div class="result">Deezer hat keinen Treffer gefunden.</div>';return}resultsElement.innerHTML=results.map((result,index)=>{const artist=escapeHtml(result.artist?.name||"Unbekannter Interpret"),title=escapeHtml(result.title||"Unbekannter Titel"),album=escapeHtml(result.album?.title||"Unbekanntes Album"),preview=typeof result.preview==="string"?result.preview:"",previewPart=preview?`<audio controls playsinline preload="none" src="${escapeHtml(preview)}"></audio>`:'<div class="small">FÃ¼r diesen Treffer wurde keine HÃ¶rprobe geliefert.</div>';return`<div class="result"><strong>${index+1}. ${artist} â ${title}</strong><div class="result-meta">Album: ${album}</div>${previewPart}</div>`}).join("")}
-    async function runSearch(){discardAllPreviews();resultsElement.textContent="Suche lÃ¤uft â¦";searchButton.disabled=true;try{const input=validateInput(),searchText=[input.artist,input.title,input.version].filter(Boolean).join(" ");setStatus("Deezer wird durchsucht.");const results=await deezerSearchJsonp(searchText);renderResults(results);const previews=results.filter(result=>typeof result.preview==="string"&&result.preview.length>0).length;if(results.length===0)setStatus("Deezer ist erreichbar, hat aber keinen Treffer gefunden.","warning");else if(previews===0)setStatus(`Deezer ist erreichbar. ${results.length} Treffer, aber keine HÃ¶rprobe gefunden.`,"warning");else setStatus(`Deezer funktioniert: ${results.length} Treffer, davon ${previews} mit HÃ¶rprobe.`,"success")}catch(error){resultsElement.textContent="Keine Ergebnisse verfÃ¼gbar.";setStatus(error.message||"Der Deezer-Test ist fehlgeschlagen.","error")}finally{searchButton.disabled=false}}
-    searchButton.addEventListener("click",runSearch);window.addEventListener("beforeunload",discardAllPreviews);
+
+    const PLAYER_VERSION = 5;
+    const QR_FORMAT_VERSION = 1;
+    const SEARCH_LIMIT = 25;
+    const REQUEST_TIMEOUT_MS = 15000;
+    const MIN_ACCEPTABLE_SCORE = 52;
+
+    const headerTitle = document.getElementById("headerTitle");
+    const startButton = document.getElementById("startButton");
+    const stopCameraButton = document.getElementById("stopCameraButton");
+    const newCardButton = document.getElementById("newCardButton");
+    const playButton = document.getElementById("playButton");
+    const discardButton = document.getElementById("discardButton");
+    const statusElement = document.getElementById("status");
+    const cardIdElement = document.getElementById("cardId");
+    const playerBox = document.getElementById("playerBox");
+    const audioPlayer = document.getElementById("audioPlayer");
+
+    headerTitle.textContent = `HH Musikquiz Player â Version ${PLAYER_VERSION}`;
+
+    let qrScanner = null;
+    let scannerRunning = false;
+    let scanLocked = false;
+    let currentCard = null;
+    let currentPreviewUrl = null;
+
+    function setStatus(message, type = "") {
+      statusElement.textContent = message;
+      statusElement.className = type;
+    }
+
+    function normalizeText(value) {
+      return String(value ?? "")
+        .toLocaleLowerCase("de-DE")
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .replace(/&/g, " und ")
+        .replace(/[()[\]{}]/g, " ")
+        .replace(/[^a-z0-9]+/g, " ")
+        .replace(/\s+/g, " ")
+        .trim();
+    }
+
+    function tokenize(value) {
+      const normalized = normalizeText(value);
+      return normalized ? normalized.split(" ") : [];
+    }
+
+    function tokenSimilarity(expected, actual) {
+      const expectedTokens = tokenize(expected);
+      const actualTokens = new Set(tokenize(actual));
+
+      if (expectedTokens.length === 0) {
+        return 1;
+      }
+
+      const matches = expectedTokens.filter(token => actualTokens.has(token)).length;
+      return matches / expectedTokens.length;
+    }
+
+    function containsAllExpectedWords(expected, actual) {
+      const expectedTokens = tokenize(expected);
+      const actualNormalized = ` ${normalizeText(actual)} `;
+
+      return expectedTokens.length > 0 &&
+        expectedTokens.every(token => actualNormalized.includes(` ${token} `));
+    }
+
+    function validateQrPayload(rawText) {
+      if (typeof rawText !== "string" || rawText.length > 2500) {
+        throw new Error("Der QR-Code enthÃ¤lt keine zulÃ¤ssigen Daten.");
+      }
+
+      let data;
+
+      try {
+        data = JSON.parse(rawText);
+      } catch {
+        throw new Error("Der QR-Code enthÃ¤lt kein gÃ¼ltiges JSON-Format.");
+      }
+
+      if (!data || typeof data !== "object" || Array.isArray(data)) {
+        throw new Error("Die QR-Daten haben die falsche Struktur.");
+      }
+
+      const allowedKeys = new Set(["v", "id", "artist", "title", "year", "version"]);
+
+      for (const key of Object.keys(data)) {
+        if (!allowedKeys.has(key)) {
+          throw new Error(`UnzulÃ¤ssiges Datenfeld im QR-Code: ${key}`);
+        }
+      }
+
+      if (data.v !== QR_FORMAT_VERSION) {
+        throw new Error(`Nicht unterstÃ¼tzte QR-Version: ${String(data.v)}`);
+      }
+
+      const id = String(data.id ?? "").trim();
+      const artist = String(data.artist ?? "").trim();
+      const title = String(data.title ?? "").trim();
+      const version = String(data.version ?? "").trim();
+      const year = String(data.year ?? "").trim();
+
+      if (!/^FILM-[A-HJ-NP-Z2-9]{6}$/.test(id)) {
+        throw new Error("Die Karten-ID ist ungÃ¼ltig.");
+      }
+
+      if (artist.length < 1 || artist.length > 150) {
+        throw new Error("Der Interpret fehlt oder ist zu lang.");
+      }
+
+      if (title.length < 1 || title.length > 200) {
+        throw new Error("Der Titel fehlt oder ist zu lang.");
+      }
+
+      if (version.length > 150) {
+        throw new Error("Die Versionsangabe ist zu lang.");
+      }
+
+      if (year && !/^\d{4}$/.test(year)) {
+        throw new Error("Die Jahreszahl ist ungÃ¼ltig.");
+      }
+
+      return {
+        v: QR_FORMAT_VERSION,
+        id,
+        artist,
+        title,
+        year,
+        version
+      };
+    }
+
+    function buildSearchText(card) {
+      return [card.artist, card.title, card.version]
+        .filter(Boolean)
+        .join(" ");
+    }
+
+    function deezerSearchJsonp(searchText) {
+      return new Promise((resolve, reject) => {
+        const callbackName =
+          `hhDeezerCallback_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+
+        const script = document.createElement("script");
+
+        const timeout = window.setTimeout(() => {
+          cleanup();
+          reject(new Error("Deezer hat innerhalb von 15 Sekunden nicht geantwortet."));
+        }, REQUEST_TIMEOUT_MS);
+
+        function cleanup() {
+          window.clearTimeout(timeout);
+
+          try {
+            delete window[callbackName];
+          } catch {
+            window[callbackName] = undefined;
+          }
+
+          script.remove();
+        }
+
+        window[callbackName] = data => {
+          cleanup();
+
+          if (!data || !Array.isArray(data.data)) {
+            reject(new Error("Deezer hat keine verwertbare Antwort geliefert."));
+            return;
+          }
+
+          resolve(data.data);
+        };
+
+        script.onerror = () => {
+          cleanup();
+          reject(new Error("Die Deezer-Suche konnte nicht geladen werden."));
+        };
+
+        const params = new URLSearchParams({
+          q: searchText,
+          limit: String(SEARCH_LIMIT),
+          output: "jsonp",
+          callback: callbackName
+        });
+
+        script.src = `https://api.deezer.com/search?${params.toString()}`;
+        script.async = true;
+        script.referrerPolicy = "no-referrer";
+        document.head.appendChild(script);
+      });
+    }
+
+    function scoreResult(card, result) {
+      const resultArtist = result.artist?.name ?? "";
+      const resultTitle = result.title ?? "";
+      const resultAlbum = result.album?.title ?? "";
+      const combined = `${resultTitle} ${resultAlbum}`;
+
+      let score = 0;
+
+      const artistSimilarity = tokenSimilarity(card.artist, resultArtist);
+      const titleSimilarity = tokenSimilarity(card.title, resultTitle);
+
+      score += artistSimilarity * 42;
+      score += titleSimilarity * 46;
+
+      if (normalizeText(card.artist) === normalizeText(resultArtist)) {
+        score += 18;
+      } else if (containsAllExpectedWords(card.artist, resultArtist)) {
+        score += 10;
+      }
+
+      if (normalizeText(card.title) === normalizeText(resultTitle)) {
+        score += 22;
+      } else if (containsAllExpectedWords(card.title, resultTitle)) {
+        score += 12;
+      }
+
+      if (card.version) {
+        const versionSimilarity = tokenSimilarity(card.version, combined);
+        score += versionSimilarity * 24;
+
+        if (containsAllExpectedWords(card.version, combined)) {
+          score += 10;
+        } else {
+          score -= 8;
+        }
+      }
+
+      const unwantedTerms = ["karaoke", "tribute", "cover", "instrumental"];
+      const requestedText = normalizeText(`${card.title} ${card.version}`);
+      const resultText = normalizeText(`${resultTitle} ${resultAlbum} ${resultArtist}`);
+
+      for (const term of unwantedTerms) {
+        if (resultText.includes(term) && !requestedText.includes(term)) {
+          score -= 25;
+        }
+      }
+
+      const optionalVariants = ["live", "remix", "remastered", "acoustic"];
+
+      for (const term of optionalVariants) {
+        if (resultText.includes(term) && !requestedText.includes(term)) {
+          score -= 10;
+        }
+      }
+
+      if (!result.preview) {
+        score -= 100;
+      }
+
+      return score;
+    }
+
+    function chooseBestResult(card, results) {
+      const candidates = results
+        .filter(result => typeof result.preview === "string" && result.preview.length > 0)
+        .map(result => ({
+          result,
+          score: scoreResult(card, result)
+        }))
+        .sort((a, b) => b.score - a.score);
+
+      if (candidates.length === 0) {
+        throw new Error("Deezer hat keinen Treffer mit HÃ¶rprobe gefunden.");
+      }
+
+      const best = candidates[0];
+
+      if (best.score < MIN_ACCEPTABLE_SCORE) {
+        throw new Error("Es wurde kein ausreichend passender Deezer-Treffer gefunden.");
+      }
+
+      return best;
+    }
+
+    async function processCard(card) {
+      currentCard = card;
+      cardIdElement.textContent = `Karten-ID: ${card.id}`;
+
+      setStatus("QR-Code gÃ¼ltig. Deezer wird nach der aktuellen HÃ¶rprobe durchsucht.");
+
+      const searchText = buildSearchText(card);
+      const results = await deezerSearchJsonp(searchText);
+
+      setStatus("Deezer-Treffer werden verglichen und bewertet.");
+
+      const bestMatch = chooseBestResult(card, results);
+
+      currentPreviewUrl = bestMatch.result.preview;
+      audioPlayer.src = currentPreviewUrl;
+      audioPlayer.load();
+
+      playerBox.classList.add("visible");
+      playButton.disabled = false;
+      discardButton.disabled = false;
+      newCardButton.disabled = false;
+
+      setStatus("Passende HÃ¶rprobe gefunden. Die Wiedergabe wird gestartet.", "success");
+
+      try {
+        await audioPlayer.play();
+      } catch {
+        setStatus(
+          "Passende HÃ¶rprobe gefunden. Bitte auf âHÃ¶rprobe startenâ tippen.",
+          "warning"
+        );
+      }
+    }
+
+    function discardPreview(showMessage = true) {
+      audioPlayer.pause();
+      audioPlayer.removeAttribute("src");
+      audioPlayer.load();
+
+      currentPreviewUrl = null;
+      playButton.disabled = true;
+      discardButton.disabled = true;
+
+      if (showMessage) {
+        setStatus("Die HÃ¶rprobe wurde beendet und die Vorschauadresse verworfen.");
+      }
+    }
+
+    async function handleDecodedText(decodedText) {
+      if (scanLocked) {
+        return;
+      }
+
+      scanLocked = true;
+
+      try {
+        const card = validateQrPayload(decodedText);
+        await stopScanner();
+        await processCard(card);
+      } catch (error) {
+        setStatus(
+          error.message || "Der QR-Code konnte nicht verarbeitet werden.",
+          "error"
+        );
+
+        scanLocked = false;
+      }
+    }
+
+    async function startScanner() {
+      if (scannerRunning) {
+        return;
+      }
+
+      discardPreview(false);
+      currentCard = null;
+      cardIdElement.textContent = "";
+      playerBox.classList.remove("visible");
+      newCardButton.disabled = true;
+      scanLocked = false;
+
+      setStatus("Kamera wird gestartet.");
+
+      if (!qrScanner) {
+        qrScanner = new Html5Qrcode("reader");
+      }
+
+      try {
+        const cameras = await Html5Qrcode.getCameras();
+
+        if (!cameras || cameras.length === 0) {
+          throw new Error("Es wurde keine Kamera gefunden.");
+        }
+
+        const preferredCamera =
+          cameras.find(camera => /back|rear|environment|rÃ¼ck/i.test(camera.label)) ??
+          cameras[cameras.length - 1];
+
+        await qrScanner.start(
+          preferredCamera.id,
+          {
+            fps: 10,
+            qrbox: (viewfinderWidth, viewfinderHeight) => {
+              const size = Math.floor(
+                Math.min(viewfinderWidth, viewfinderHeight) * 0.72
+              );
+
+              return {
+                width: size,
+                height: size
+              };
+            },
+            aspectRatio: 1
+          },
+          handleDecodedText,
+          () => {
+            // Normale Lesefehler wÃ¤hrend des Suchens werden nicht angezeigt.
+          }
+        );
+
+        scannerRunning = true;
+        startButton.disabled = true;
+        stopCameraButton.disabled = false;
+
+        setStatus("Kamera aktiv. QR-Code vollstÃ¤ndig in den Rahmen halten.");
+      } catch (error) {
+        scannerRunning = false;
+        startButton.disabled = false;
+        stopCameraButton.disabled = true;
+
+        setStatus(
+          error.message ||
+            "Die Kamera konnte nicht gestartet werden. Bitte Kamerazugriff erlauben.",
+          "error"
+        );
+      }
+    }
+
+    async function stopScanner() {
+      if (!qrScanner || !scannerRunning) {
+        return;
+      }
+
+      try {
+        await qrScanner.stop();
+        await qrScanner.clear();
+      } catch {
+        // Der Zustand wird trotzdem zurÃ¼ckgesetzt.
+      } finally {
+        scannerRunning = false;
+        startButton.disabled = false;
+        stopCameraButton.disabled = true;
+      }
+    }
+
+    async function prepareNextCard() {
+      discardPreview(false);
+      currentCard = null;
+      cardIdElement.textContent = "";
+      playerBox.classList.remove("visible");
+      newCardButton.disabled = true;
+      scanLocked = false;
+
+      await startScanner();
+    }
+
+    startButton.addEventListener("click", startScanner);
+
+    stopCameraButton.addEventListener("click", async () => {
+      await stopScanner();
+      setStatus("Kamera gestoppt.");
+    });
+
+    newCardButton.addEventListener("click", prepareNextCard);
+
+    playButton.addEventListener("click", async () => {
+      if (!currentPreviewUrl) {
+        setStatus("Es ist keine HÃ¶rprobe geladen.", "error");
+        return;
+      }
+
+      try {
+        await audioPlayer.play();
+        setStatus("HÃ¶rprobe wird abgespielt.", "success");
+      } catch {
+        setStatus("Die HÃ¶rprobe konnte nicht gestartet werden.", "error");
+      }
+    });
+
+    discardButton.addEventListener("click", () => {
+      discardPreview(true);
+    });
+
+    audioPlayer.addEventListener("ended", () => {
+      discardPreview(false);
+
+      setStatus(
+        "HÃ¶rprobe beendet. Die Vorschauadresse wurde verworfen.",
+        "success"
+      );
+    });
+
+    audioPlayer.addEventListener("error", () => {
+      if (currentPreviewUrl) {
+        discardPreview(false);
+
+        setStatus(
+          "Die HÃ¶rprobe konnte nicht geladen werden. Die Vorschauadresse wurde verworfen.",
+          "error"
+        );
+      }
+    });
+
+    window.addEventListener("beforeunload", () => {
+      if (scannerRunning && qrScanner) {
+        qrScanner.stop().catch(() => {});
+      }
+
+      discardPreview(false);
+    });
   </script>
 </body>
 </html>
