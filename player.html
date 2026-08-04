@@ -221,7 +221,6 @@
 
       <div class="button-row">
         <button id="startButton" type="button">Kamera starten</button>
-        <button id="stopCameraButton" type="button" class="secondary" disabled>Kamera stoppen</button>
         <button id="torchButton" type="button" class="secondary" disabled>Lampe einschalten</button>
         <button id="newCardButton" type="button" class="secondary" disabled>N&auml;chste Karte</button>
       </div>
@@ -244,8 +243,9 @@
       <audio id="audioPlayer" controls playsinline preload="none"></audio>
 
       <div class="button-row">
-        <button id="playButton" type="button" disabled>H&ouml;rprobe starten</button>
-        <button id="discardButton" type="button" class="danger" disabled>H&ouml;rprobe beenden</button>
+        <button id="repeatButton" type="button" class="secondary" disabled>
+          Wiederholen
+        </button>
       </div>
 
       <div class="technical-details">
@@ -297,7 +297,7 @@
   <script>
     "use strict";
 
-    const PLAYER_VERSION = 10;
+    const PLAYER_VERSION = 12;
     const QR_FORMAT_VERSION = 1;
     const SEARCH_LIMIT = 25;
     const REQUEST_TIMEOUT_MS = 15000;
@@ -305,13 +305,11 @@
 
     const headerTitle = document.getElementById("headerTitle");
     const startButton = document.getElementById("startButton");
-    const stopCameraButton = document.getElementById("stopCameraButton");
     const torchButton = document.getElementById("torchButton");
     const newCardButton = document.getElementById("newCardButton");
     const cameraChoiceBox = document.getElementById("cameraChoiceBox");
     const cameraSelect = document.getElementById("cameraSelect");
-    const playButton = document.getElementById("playButton");
-    const discardButton = document.getElementById("discardButton");
+    const repeatButton = document.getElementById("repeatButton");
     const statusElement = document.getElementById("status");
     const cardIdElement = document.getElementById("cardId");
     const playerBox = document.getElementById("playerBox");
@@ -597,8 +595,8 @@
       audioPlayer.load();
 
       playerBox.classList.add("visible");
-      playButton.disabled = false;
-      discardButton.disabled = false;
+      repeatButton.disabled = true;
+      repeatButton.textContent = "Wiederholen";
       newCardButton.disabled = false;
 
       setStatus("Passende H\u00f6rprobe gefunden. Die Wiedergabe wird gestartet.", "success");
@@ -619,8 +617,8 @@
       audioPlayer.load();
 
       currentPreviewUrl = null;
-      playButton.disabled = true;
-      discardButton.disabled = true;
+      repeatButton.disabled = true;
+      repeatButton.textContent = "Wiederholen";
 
       if (showMessage) {
         setStatus("Die H\u00f6rprobe wurde beendet und die Vorschauadresse verworfen.");
@@ -693,7 +691,6 @@
 
         scannerRunning = true;
         startButton.disabled = true;
-        stopCameraButton.disabled = false;
 
         configureCameraControls();
 
@@ -703,7 +700,6 @@
       } catch (error) {
         scannerRunning = false;
         startButton.disabled = false;
-        stopCameraButton.disabled = true;
 
         setStatus(
           error.message ||
@@ -713,45 +709,67 @@
       }
     }
 
-    function choosePreferredCamera(cameras) {
-      const ultraWide =
-        cameras.find(camera =>
-          /ultra|wide|weitwinkel|0\.5/i.test(camera.label)
-        );
+    function isFrontCamera(camera) {
+      return /front|user|facetime|vorder/i.test(camera.label || "");
+    }
 
-      if (ultraWide) {
-        return ultraWide;
+    function getRearCameras(cameras) {
+      const rear = cameras.filter(camera => !isFrontCamera(camera));
+      return rear.length > 0 ? rear : cameras;
+    }
+
+    function choosePreferredCamera(cameras) {
+      const rearCameras = getRearCameras(cameras);
+
+      const tripleCamera = rearCameras.find(camera =>
+        /triple|dreifach/i.test(camera.label || "")
+      );
+
+      if (tripleCamera) {
+        return tripleCamera;
       }
 
-      const backCamera =
-        cameras.find(camera =>
-          /back|rear|environment|r\u00fcck/i.test(camera.label)
-        );
+      const dualCamera = rearCameras.find(camera =>
+        /dual|zweifach/i.test(camera.label || "")
+      );
 
-      return backCamera ?? cameras[cameras.length - 1];
+      if (dualCamera) {
+        return dualCamera;
+      }
+
+      const rearCamera = rearCameras.find(camera =>
+        /back|rear|environment|r\\u00fcck/i.test(camera.label || "")
+      );
+
+      return rearCamera ?? rearCameras[rearCameras.length - 1];
     }
 
     function fillCameraSelection(cameras) {
+      const rearCameras = getRearCameras(cameras);
       const previousValue = cameraSelect.value;
+
       cameraSelect.innerHTML = "";
 
-      cameras.forEach((camera, index) => {
+      rearCameras.forEach((camera, index) => {
         const option = document.createElement("option");
         option.value = camera.id;
         option.textContent =
-          camera.label || `Kamera ${index + 1}`;
+          camera.label || `R\\u00fcckkamera ${index + 1}`;
         cameraSelect.appendChild(option);
       });
 
-      const preferred = choosePreferredCamera(cameras);
+      const preferred = choosePreferredCamera(rearCameras);
 
-      if (previousValue && cameras.some(camera => camera.id === previousValue)) {
+      if (
+        previousValue &&
+        rearCameras.some(camera => camera.id === previousValue)
+      ) {
         cameraSelect.value = previousValue;
       } else {
         cameraSelect.value = preferred.id;
       }
 
-      cameraChoiceBox.hidden = cameras.length < 2;
+      cameraChoiceBox.hidden = rearCameras.length < 2;
     }
 
     async function restartWithSelectedCamera() {
@@ -839,7 +857,6 @@
       } finally {
         scannerRunning = false;
         startButton.disabled = false;
-        stopCameraButton.disabled = true;
         resetCameraControls();
       }
     }
@@ -857,42 +874,47 @@
 
     startButton.addEventListener("click", startScanner);
 
-    stopCameraButton.addEventListener("click", async () => {
-      await stopScanner();
-      setStatus("Kamera gestoppt.");
-    });
-
     torchButton.addEventListener("click", toggleTorch);
 
     cameraSelect.addEventListener("change", restartWithSelectedCamera);
 
     newCardButton.addEventListener("click", prepareNextCard);
 
-    playButton.addEventListener("click", async () => {
+    repeatButton.addEventListener("click", async () => {
       if (!currentPreviewUrl) {
-        setStatus("Es ist keine H\u00f6rprobe geladen.", "error");
         return;
       }
 
+      audioPlayer.currentTime = 0;
+      repeatButton.disabled = true;
+
       try {
         await audioPlayer.play();
-        setStatus("H\u00f6rprobe wird abgespielt.", "success");
+
+        setStatus(
+          "H\u00f6rprobe wird wiederholt.",
+          "success"
+        );
       } catch {
-        setStatus("Die H\u00f6rprobe konnte nicht gestartet werden.", "error");
+        repeatButton.disabled = false;
+
+        setStatus(
+          "Die Wiederholung konnte nicht gestartet werden.",
+          "error"
+        );
       }
     });
 
-    discardButton.addEventListener("click", () => {
-      discardPreview(true);
-    });
-
     audioPlayer.addEventListener("ended", () => {
-      discardPreview(false);
+      if (currentPreviewUrl) {
+        repeatButton.disabled = false;
+        repeatButton.textContent = "Wiederholen";
 
-      setStatus(
-        "H\u00f6rprobe beendet. Die Vorschauadresse wurde verworfen.",
-        "success"
-      );
+        setStatus(
+          "H\u00f6rprobe beendet. Sie kann beliebig oft wiederholt werden.",
+          "success"
+        );
+      }
     });
 
     audioPlayer.addEventListener("error", () => {
