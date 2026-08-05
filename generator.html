@@ -8,33 +8,184 @@
 <script src="https://cdn.jsdelivr.net/npm/qrious@4.0.2/dist/qrious.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <style>
-body{margin:0;font-family:Arial,sans-serif;background:#f2f2f7}
-header{background:#0A84FF;color:#fff;padding:18px;font-size:34px;font-weight:bold}
-header div{font-size:18px;font-weight:normal;margin-top:6px}
-main{max-width:1100px;margin:auto;padding:18px}
-.box{background:#fff;border-radius:18px;padding:18px;margin-bottom:18px;box-shadow:0 2px 8px rgba(0,0,0,.08)}
-button{width:100%;padding:18px;font-size:22px;border:0;border-radius:14px;background:#e8e8ed;cursor:pointer}
-button.primary{background:#0A84FF;color:#fff} button:disabled{opacity:.45;cursor:not-allowed}
-.scroll{overflow:auto;max-height:500px}
-table{width:100%;border-collapse:collapse;font-size:17px}
-th{background:#efefef;position:sticky;top:0;z-index:1}
-th,td{border:1px solid #ccc;padding:8px;text-align:left;vertical-align:top}
-input[type=text],select{width:100%;padding:12px;font-size:18px;border:1px solid #ccc;border-radius:10px;box-sizing:border-box}
-canvas{display:block;margin:auto}
-.grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:15px 0}
-.metric{padding:12px;border:1px solid #ddd;border-radius:12px;background:#f8f8fa}
-.metric b{display:block;margin-bottom:5px}
-.ok{color:#15803d;font-weight:bold}.bad{color:#b91c1c;font-weight:bold}.warn{color:#b45309;font-weight:bold}.pending{color:#555}
-details summary{cursor:pointer;font-size:20px;font-weight:bold}.legal{margin-top:14px;line-height:1.55}.legal h3{margin:22px 0 8px}.legal a{color:#06c}
-@media(max-width:700px){.grid{grid-template-columns:1fr 1fr}}
+:root{
+    --green:#22c55e;
+    --green-dark:#15803d;
+    --green-soft:#dcfce7;
+    --background:#f3f7f1;
+    --card:#ffffff;
+    --text:#17321f;
+    --muted:#657268;
+    --border:#d8e3da;
+    --red:#dc2626;
+    --orange:#ea580c;
+    --shadow:0 10px 28px rgba(32,82,47,.13);
+}
+
+*{box-sizing:border-box}
+
+body{
+    margin:0;
+    min-height:100vh;
+    font-family:Arial,Helvetica,sans-serif;
+    color:var(--text);
+    background:
+        radial-gradient(circle at top right,rgba(190,242,100,.34),transparent 34%),
+        linear-gradient(180deg,#f9fff6 0%,var(--background) 100%);
+}
+
+header{
+    padding:22px 16px 26px;
+    color:white;
+    background:linear-gradient(135deg,var(--green-dark),var(--green) 60%,#65d46e);
+    text-align:center;
+    font-size:clamp(25px,6vw,36px);
+    font-weight:bold;
+    box-shadow:0 6px 20px rgba(21,128,61,.26);
+}
+
+header div{
+    margin-top:6px;
+    font-size:18px;
+    font-weight:normal;
+}
+
+main{
+    width:min(1100px,calc(100% - 18px));
+    margin:10px auto 24px;
+}
+
+.box{
+    margin-bottom:10px;
+    padding:14px;
+    background:var(--card);
+    border:1px solid var(--border);
+    border-radius:20px;
+    box-shadow:var(--shadow);
+}
+
+button{
+    width:100%;
+    min-height:54px;
+    padding:12px 18px;
+    border:0;
+    border-radius:14px;
+    color:var(--text);
+    background:#edf5ee;
+    font-size:19px;
+    font-weight:800;
+    cursor:pointer;
+}
+
+button.primary{
+    color:white;
+    background:linear-gradient(135deg,var(--green-dark),var(--green));
+    box-shadow:0 5px 14px rgba(34,197,94,.22);
+}
+
+button:hover{filter:brightness(.98)}
+
+button:disabled{
+    cursor:not-allowed;
+    opacity:.42;
+    box-shadow:none;
+}
+
+.scroll{
+    overflow:auto;
+    max-height:520px;
+}
+
+table{
+    width:100%;
+    border-collapse:collapse;
+    font-size:17px;
+}
+
+th{
+    position:sticky;
+    top:0;
+    z-index:1;
+    color:var(--text);
+    background:#edf5ee;
+}
+
+th,td{
+    padding:8px;
+    border:1px solid var(--border);
+    text-align:left;
+    vertical-align:top;
+}
+
+input[type=text],select{
+    width:100%;
+    min-height:46px;
+    padding:10px 12px;
+    border:1px solid var(--border);
+    border-radius:12px;
+    background:white;
+    font-size:18px;
+}
+
+canvas{
+    display:block;
+    margin:auto;
+}
+
+.grid{
+    display:grid;
+    grid-template-columns:repeat(3,minmax(0,1fr));
+    gap:10px;
+    margin:15px 0;
+}
+
+.metric{
+    padding:12px;
+    border:1px solid var(--border);
+    border-radius:12px;
+    background:#f8fbf8;
+}
+
+.metric b{
+    display:block;
+    margin-bottom:5px;
+}
+
+.ok{color:var(--green-dark);font-weight:bold}
+.bad{color:var(--red);font-weight:bold}
+.warn{color:var(--orange);font-weight:bold}
+.pending{color:var(--muted)}
+
+details summary{
+    cursor:pointer;
+    font-size:20px;
+    font-weight:bold;
+}
+
+.legal{
+    margin-top:14px;
+    color:var(--muted);
+    line-height:1.55;
+}
+
+.legal h3{
+    margin:22px 0 8px;
+    color:var(--text);
+}
+
+.legal a{color:var(--green-dark)}
+
+@media(max-width:700px){
+    .grid{grid-template-columns:1fr 1fr}
+}
 </style>
 </head>
 <body>
-<header>ðµ HH Musikquiz<div id="versionDisplay"></div></header>
+<header>🎵 HH Musikquiz<div id="versionDisplay"></div></header>
 <main>
 <div class="box">
 <input id="csv" type="file" accept=".csv" hidden>
-<button type="button" onclick="document.getElementById('csv').click()">ð CSV-Datei auswÃ¤hlen</button>
+<button type="button" onclick="document.getElementById('csv').click()">📂 CSV-Datei auswählen</button>
 </div>
 
 <div class="box">
@@ -46,19 +197,19 @@ details summary{cursor:pointer;font-size:20px;font-weight:bold}.legal{margin-top
 </div>
 
 <div class="box">
-<button id="checkPreviews" type="button" class="primary" disabled>Deezer-HÃ¶rproben online prÃ¼fen</button>
+<button id="checkPreviews" type="button" class="primary" disabled>Deezer-Hörproben online prüfen</button>
 <div class="grid">
-<div class="metric"><b>GeprÃ¼ft</b><span id="checkedCount">0</span></div>
-<div class="metric"><b>HÃ¶rprobe verfÃ¼gbar</b><span id="availableCount">0</span></div>
-<div class="metric"><b>Keine HÃ¶rprobe</b><span id="unavailableCount">0</span></div>
+<div class="metric"><b>Geprüft</b><span id="checkedCount">0</span></div>
+<div class="metric"><b>Hörprobe verfügbar</b><span id="availableCount">0</span></div>
+<div class="metric"><b>Keine Hörprobe</b><span id="unavailableCount">0</span></div>
 <div class="metric"><b>Kein passender Treffer</b><span id="noMatchCount">0</span></div>
 <div class="metric"><b>Technischer Fehler</b><span id="technicalCount">0</span></div>
 <div class="metric"><b>Erfolgsquote</b><span id="successRate">0 %</span></div>
 </div>
-<small>Die PrÃ¼fung verwendet dieselbe Deezer-Suche und Trefferbewertung wie der Player. HÃ¶rprobenadressen werden nicht gespeichert.</small>
+<small>Die Prüfung verwendet dieselbe Deezer-Suche und Trefferbewertung wie der Player. Zwischen den Abfragen sowie nach jeweils 20 Karten werden Sicherheitspausen eingelegt. Hörprobenadressen werden nicht gespeichert.</small>
 </div>
 
-<div class="box"><input id="search" type="text" placeholder="ð Film, Interpret oder Titel suchen..."></div>
+<div class="box"><input id="search" type="text" placeholder="🔍 Film, Interpret oder Titel suchen..."></div>
 <div class="box scroll"><table id="tbl"></table></div>
 
 <div class="box">
@@ -67,7 +218,7 @@ details summary{cursor:pointer;font-size:20px;font-weight:bold}.legal{margin-top
 <option value="long">Lange Kante wenden</option>
 <option value="short">Kurze Kante wenden</option>
 </select>
-<button id="downloadQr" type="button" disabled>Duplex-PDF mit geprÃ¼ften Karten erstellen</button>
+<button id="downloadQr" type="button" disabled>Duplex-PDF mit geprüften Karten erstellen</button>
 </div>
 
 <div class="box">
@@ -75,21 +226,21 @@ details summary{cursor:pointer;font-size:20px;font-weight:bold}.legal{margin-top
 <summary>Impressum und Datenschutz</summary>
 <div class="legal">
 <h3>Impressum</h3>
-<p><strong>Angaben gemÃ¤Ã Â§ 5 DDG</strong></p>
+<p><strong>Angaben gemäß § 5 DDG</strong></p>
 <p>Dr. Harald Hanke<br>Reutgrabenweg 14<br>76297 Stutensee<br>Deutschland</p>
 <p><strong>Kontakt</strong><br>E-Mail: <a href="mailto:harald@hanke.com">harald at hanke.com</a></p>
-<p><strong>Verantwortlich fÃ¼r den Inhalt</strong><br>Dr. Harald Hanke<br>Reutgrabenweg 14<br>76297 Stutensee</p>
-<p>Dieses Angebot ist ein privates Musikquiz-Projekt. Es besteht keine Verbindung zu Deezer, GitHub oder den Rechteinhabern der genannten Filme und MusikstÃ¼cke.</p>
+<p><strong>Verantwortlich für den Inhalt</strong><br>Dr. Harald Hanke<br>Reutgrabenweg 14<br>76297 Stutensee</p>
+<p>Dieses Angebot ist ein privates Musikquiz-Projekt. Es besteht keine Verbindung zu Deezer, GitHub oder den Rechteinhabern der genannten Filme und Musikstücke.</p>
 
-<h3>DatenschutzerklÃ¤rung</h3>
+<h3>Datenschutzerklärung</h3>
 <p><strong>Verantwortlicher</strong><br>Dr. Harald Hanke, Reutgrabenweg 14, 76297 Stutensee<br>E-Mail: harald at hanke.com</p>
-<p><strong>Hosting Ã¼ber GitHub Pages</strong><br>Diese Seite wird Ã¼ber GitHub Pages bereitgestellt. Beim Aufruf kÃ¶nnen insbesondere die IP-Adresse, Datum und Uhrzeit, aufgerufene Seite sowie technische Browser- und Verbindungsdaten durch GitHub verarbeitet und zu Sicherheitszwecken protokolliert werden.</p>
-<p><strong>Extern geladene Programmbibliotheken</strong><br>Beim Seitenaufruf werden Papa Parse und QRious Ã¼ber jsDelivr sowie jsPDF Ã¼ber cdnjs geladen. Dabei wird eine Verbindung zu den jeweiligen Anbietern hergestellt. Diese erhalten technisch notwendige Verbindungsdaten, insbesondere die IP-Adresse.</p>
-<p><strong>Verarbeitung der CSV-Datei</strong><br>Die ausgewÃ¤hlte CSV-Datei wird ausschlieÃlich lokal im Browser verarbeitet. Die Kartendaten werden nicht auf einen eigenen Server hochgeladen. QR-Codes und PDF-Dateien werden lokal im Browser erzeugt.</p>
-<p><strong>Deezer-HÃ¶rprobenprÃ¼fung</strong><br>Die Deezer-Abfrage wird erst nach BetÃ¤tigung der SchaltflÃ¤che âDeezer-HÃ¶rproben online prÃ¼fenâ gestartet. Dabei werden Interpret, Titel und gegebenenfalls die Versionsangabe an die Deezer-API Ã¼bertragen. ZusÃ¤tzlich fallen bei Deezer technisch notwendige Verbindungsdaten wie die IP-Adresse an. Die HÃ¶rprobenadresse wird nur fÃ¼r die aktuelle PrÃ¼fung verwendet und nicht dauerhaft gespeichert.</p>
-<p><strong>Cookies und lokale Speicherung</strong><br>Der eigene Programmcode setzt keine Cookies, verwendet kein localStorage und fÃ¼hrt keine eigene Reichweitenmessung oder Profilbildung durch. Externe Anbieter kÃ¶nnen Verbindungsdaten nach ihren eigenen Datenschutzbestimmungen verarbeiten.</p>
-<p><strong>Rechtsgrundlage</strong><br>Die Verarbeitung erfolgt, soweit anwendbar, auf Grundlage von Art. 6 Abs. 1 lit. f DSGVO. Das berechtigte Interesse liegt in der sicheren technischen Bereitstellung der Seite und in der vom Nutzer ausgelÃ¶sten FunktionsprÃ¼fung der Musikquiz-Karten.</p>
-<p><strong>Betroffenenrechte</strong><br>Betroffene Personen haben im Rahmen der gesetzlichen Voraussetzungen insbesondere Rechte auf Auskunft, Berichtigung, LÃ¶schung, EinschrÃ¤nkung der Verarbeitung, Widerspruch und DatenÃ¼bertragbarkeit sowie ein Beschwerderecht bei einer DatenschutzaufsichtsbehÃ¶rde.</p>
+<p><strong>Hosting über GitHub Pages</strong><br>Diese Seite wird über GitHub Pages bereitgestellt. Beim Aufruf können insbesondere die IP-Adresse, Datum und Uhrzeit, aufgerufene Seite sowie technische Browser- und Verbindungsdaten durch GitHub verarbeitet und zu Sicherheitszwecken protokolliert werden.</p>
+<p><strong>Extern geladene Programmbibliotheken</strong><br>Beim Seitenaufruf werden Papa Parse und QRious über jsDelivr sowie jsPDF über cdnjs geladen. Dabei wird eine Verbindung zu den jeweiligen Anbietern hergestellt. Diese erhalten technisch notwendige Verbindungsdaten, insbesondere die IP-Adresse.</p>
+<p><strong>Verarbeitung der CSV-Datei</strong><br>Die ausgewählte CSV-Datei wird ausschließlich lokal im Browser verarbeitet. Die Kartendaten werden nicht auf einen eigenen Server hochgeladen. QR-Codes und PDF-Dateien werden lokal im Browser erzeugt.</p>
+<p><strong>Deezer-Hörprobenprüfung</strong><br>Die Deezer-Abfrage wird erst nach Betätigung der Schaltfläche „Deezer-Hörproben online prüfen“ gestartet. Dabei werden Interpret, Titel und gegebenenfalls die Versionsangabe an die Deezer-API übertragen. Zusätzlich fallen bei Deezer technisch notwendige Verbindungsdaten wie die IP-Adresse an. Die Hörprobenadresse wird nur für die aktuelle Prüfung verwendet und nicht dauerhaft gespeichert.</p>
+<p><strong>Cookies und lokale Speicherung</strong><br>Der eigene Programmcode setzt keine Cookies, verwendet kein localStorage und führt keine eigene Reichweitenmessung oder Profilbildung durch. Externe Anbieter können Verbindungsdaten nach ihren eigenen Datenschutzbestimmungen verarbeiten.</p>
+<p><strong>Rechtsgrundlage</strong><br>Die Verarbeitung erfolgt, soweit anwendbar, auf Grundlage von Art. 6 Abs. 1 lit. f DSGVO. Das berechtigte Interesse liegt in der sicheren technischen Bereitstellung der Seite und in der vom Nutzer ausgelösten Funktionsprüfung der Musikquiz-Karten.</p>
+<p><strong>Betroffenenrechte</strong><br>Betroffene Personen haben im Rahmen der gesetzlichen Voraussetzungen insbesondere Rechte auf Auskunft, Berichtigung, Löschung, Einschränkung der Verarbeitung, Widerspruch und Datenübertragbarkeit sowie ein Beschwerderecht bei einer Datenschutzaufsichtsbehörde.</p>
 </div>
 </details>
 </div>
@@ -98,11 +249,16 @@ details summary{cursor:pointer;font-size:20px;font-weight:bold}.legal{margin-top
 <script>
 "use strict";
 
-const APP_VERSION = 21;
+const APP_VERSION = 22;
 const ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
 const SEARCH_LIMIT = 25;
 const REQUEST_TIMEOUT_MS = 15000;
 const MIN_ACCEPTABLE_SCORE = 52;
+const REQUEST_DELAY_MS = 1000;
+const BATCH_SIZE = 20;
+const BATCH_PAUSE_MS = 5000;
+const MAX_RETRIES = 3;
+const RETRY_BASE_MS = 2000;
 
 const $ = id => document.getElementById(id);
 const csvInput=$("csv"),fileName=$("file"),statusText=$("status"),cardsCount=$("cards"),
@@ -138,7 +294,7 @@ function createQrCode(canvas,qrData){
 }
 
 function resetPreviewCheck(){
-    previewChecks=data.map(()=>({status:"pending",message:"Noch nicht geprÃ¼ft"}));
+    previewChecks=data.map(()=>({status:"pending",message:"Noch nicht geprüft"}));
     previewCheckComplete=false;
     checkedCount.textContent=availableCount.textContent=unavailableCount.textContent=
     noMatchCount.textContent=technicalCount.textContent="0";
@@ -148,12 +304,12 @@ function resetPreviewCheck(){
 }
 
 function statusTextFor(check){
-    if(!check||check.status==="pending") return "â³ Noch nicht geprÃ¼ft";
-    if(check.status==="checking") return "ð Wird geprÃ¼ft";
-    if(check.status==="available") return `â VerfÃ¼gbar (${Math.round(check.score)} Punkte)`;
-    if(check.status==="unavailable") return "â Keine HÃ¶rprobe";
-    if(check.status==="nomatch") return "â ï¸ Kein ausreichend passender Treffer";
-    return "ð Technischer Fehler";
+    if(!check||check.status==="pending") return "⏳ Noch nicht geprüft";
+    if(check.status==="checking") return "🔄 Wird geprüft";
+    if(check.status==="available") return `✅ Verfügbar (${Math.round(check.score)} Punkte)`;
+    if(check.status==="unavailable") return "❌ Keine Hörprobe";
+    if(check.status==="nomatch") return "⚠️ Kein ausreichend passender Treffer";
+    return "🌐 Technischer Fehler";
 }
 
 function statusClassFor(check){
@@ -189,7 +345,7 @@ function updateSummary(){
 async function showTable(rows){
     table.innerHTML="";
     const columns=Object.keys(rows[0]||{});
-    columns.push("QR","HÃ¶rprobe");
+    columns.push("QR","Hörprobe");
     const head=document.createElement("tr");
     columns.forEach(column=>{
         const th=document.createElement("th");
@@ -208,7 +364,7 @@ async function showTable(rows){
                 const qrData={v:1,id:row.ID||"",artist:row.Interpret||"",title:row.Titel||"",version:row.Version||"",year:row.Jahr||""};
                 try{await createQrCode(canvas,qrData);td.appendChild(canvas)}
                 catch(error){td.textContent="QR-Fehler";console.error(error)}
-            }else if(column==="HÃ¶rprobe"){
+            }else if(column==="Hörprobe"){
                 td.dataset.previewIndex=String(rowIndex);
                 td.textContent=statusTextFor(previewChecks[rowIndex]);
                 td.className=statusClassFor(previewChecks[rowIndex]);
@@ -287,34 +443,63 @@ function scoreResult(card,result){
 function chooseBestResult(card,results){
     const candidates=results.filter(result=>typeof result.preview==="string"&&result.preview.length>0)
         .map(result=>({result,score:scoreResult(card,result)})).sort((a,b)=>b.score-a.score);
-    if(candidates.length===0)throw new Error("Deezer hat keinen Treffer mit HÃ¶rprobe gefunden.");
+    if(candidates.length===0)throw new Error("Deezer hat keinen Treffer mit Hörprobe gefunden.");
     const best=candidates[0];
     if(best.score<MIN_ACCEPTABLE_SCORE)throw new Error("Es wurde kein ausreichend passender Deezer-Treffer gefunden.");
     return best;
 }
-/* Ende der unverÃ¤nderten Player-Suchlogik. */
+/* Ende der unveränderten Player-Suchlogik. */
 
 const wait=ms=>new Promise(resolve=>setTimeout(resolve,ms));
+
+async function checkPreviewWithRetry(card){
+    let lastError;
+
+    for(let attempt=1;attempt<=MAX_RETRIES;attempt++){
+        try{
+            const results=await deezerSearchJsonp(buildSearchText(card));
+            return chooseBestResult(card,results);
+        }catch(error){
+            lastError=error;
+
+            const message=error?.message||"";
+            const isContentResult=
+                message.includes("keinen Treffer mit Hörprobe")||
+                message.includes("kein ausreichend passender");
+
+            if(isContentResult||attempt===MAX_RETRIES){
+                throw error;
+            }
+
+            const retryDelay=RETRY_BASE_MS*Math.pow(2,attempt-1);
+            statusText.textContent=
+                `Deezer antwortet nicht zuverlässig. Neuer Versuch ${attempt+1}/${MAX_RETRIES} in ${Math.round(retryDelay/1000)} Sekunden.`;
+
+            await wait(retryDelay);
+        }
+    }
+
+    throw lastError;
+}
 
 async function checkAllPreviews(){
     if(!data.length)return;
     checkPreviewsButton.disabled=true;
     downloadQrButton.disabled=true;
     previewCheckComplete=false;
-    statusText.textContent=`Deezer-PrÃ¼fung gestartet: 0 von ${data.length} Karten.`;
+    statusText.textContent=`Deezer-Prüfung gestartet: 0 von ${data.length} Karten.`;
 
     for(let index=0;index<data.length;index++){
         const row=data[index];
-        previewChecks[index]={status:"checking",message:"Die Karte wird gerade geprÃ¼ft."};
+        previewChecks[index]={status:"checking",message:"Die Karte wird gerade geprüft."};
         updatePreviewCell(index);
         const card={artist:String(row.Interpret||"").trim(),title:String(row.Titel||"").trim(),version:String(row.Version||"").trim()};
         try{
-            const results=await deezerSearchJsonp(buildSearchText(card));
-            const best=chooseBestResult(card,results);
-            previewChecks[index]={status:"available",message:`${best.result.artist?.name||""} â ${best.result.title||""}`,score:best.score};
+            const best=await checkPreviewWithRetry(card);
+            previewChecks[index]={status:"available",message:`${best.result.artist?.name||""} – ${best.result.title||""}`,score:best.score};
         }catch(error){
-            const message=error?.message||"Unbekannter PrÃ¼fungsfehler.";
-            previewChecks[index]=message.includes("keinen Treffer mit HÃ¶rprobe")
+            const message=error?.message||"Unbekannter Prüfungsfehler.";
+            previewChecks[index]=message.includes("keinen Treffer mit Hörprobe")
                 ?{status:"unavailable",message}
                 :message.includes("kein ausreichend passender")
                     ?{status:"nomatch",message}
@@ -322,26 +507,36 @@ async function checkAllPreviews(){
         }
         updatePreviewCell(index);
         updateSummary();
-        statusText.textContent=`Deezer-PrÃ¼fung: ${index+1} von ${data.length} Karten.`;
-        if(index<data.length-1)await wait(250);
+        statusText.textContent=`Deezer-Prüfung: ${index+1} von ${data.length} Karten.`;
+        if(index<data.length-1){
+            const completed=index+1;
+
+            if(completed%BATCH_SIZE===0){
+                statusText.textContent=
+                    `Deezer-Prüfung: ${completed} von ${data.length} Karten. Sicherheitspause von ${Math.round(BATCH_PAUSE_MS/1000)} Sekunden.`;
+                await wait(BATCH_PAUSE_MS);
+            }else{
+                await wait(REQUEST_DELAY_MS);
+            }
+        }
     }
 
     previewCheckComplete=true;
     checkPreviewsButton.disabled=false;
     const usable=previewChecks.filter(x=>x.status==="available").length;
     downloadQrButton.disabled=usable===0;
-    statusText.textContent=`PrÃ¼fung abgeschlossen: ${usable} von ${data.length} Karten verwendbar.`;
+    statusText.textContent=`Prüfung abgeschlossen: ${usable} von ${data.length} Karten verwendbar.`;
 }
 
 function downloadAllQrCodes(){
-    if(!previewCheckComplete){statusText.textContent="Bitte zuerst alle Deezer-HÃ¶rproben online prÃ¼fen.";return}
+    if(!previewCheckComplete){statusText.textContent="Bitte zuerst alle Deezer-Hörproben online prüfen.";return}
     const {jsPDF}=window.jspdf;
     const printCards=data.map((card,index)=>({
         card,check:previewChecks[index],
         canvas:table.querySelector(`canvas[data-card-index="${index}"]`)
     })).filter(item=>item.check?.status==="available"&&item.canvas);
 
-    if(!printCards.length){statusText.textContent="Keine geprÃ¼ften Karten mit HÃ¶rprobe vorhanden.";return}
+    if(!printCards.length){statusText.textContent="Keine geprüften Karten mit Hörprobe vorhanden.";return}
 
     const duplexMode=$("duplexMode").value;
     const pdf=new jsPDF({orientation:"portrait",unit:"mm",format:"a4"});
@@ -364,7 +559,7 @@ function downloadAllQrCodes(){
     }
     function addFooter(page,total,side){
         pdf.setFontSize(7);
-        pdf.text(`HH Musikquiz â Version ${APP_VERSION} â ${side}`,10,pageHeight-5);
+        pdf.text(`HH Musikquiz – Version ${APP_VERSION} – ${side}`,10,pageHeight-5);
         pdf.text(`Seite ${page}/${total}`,pageWidth-10,pageHeight-5,{align:"right"});
     }
 
@@ -406,11 +601,11 @@ function downloadAllQrCodes(){
             pdf.setFont("helvetica","normal");pdf.setFontSize(7);if(String(card.Info||"").trim())pdf.text(infoLines,centerX,y,{align:"center"});
             pdf.setFontSize(6);pdf.text(String(card.ID||""),centerX,pos.y+cardHeight-3,{align:"center"});
         }
-        addFooter(currentPage,totalPages,"RÃ¼ckseiten");
+        addFooter(currentPage,totalPages,"Rückseiten");
     }
 
     pdf.save("HH-Musikquiz-Duplex-Karten.pdf");
-    statusText.textContent=`PDF mit ${printCards.length} geprÃ¼ften Karten und ${totalPages} Seiten wurde erstellt.`;
+    statusText.textContent=`PDF mit ${printCards.length} geprüften Karten und ${totalPages} Seiten wurde erstellt.`;
 }
 
 csvInput.addEventListener("change",()=>{
@@ -419,7 +614,7 @@ csvInput.addEventListener("change",()=>{
     if(typeof QRious==="undefined"){statusText.textContent="Fehler: QR-Code-Bibliothek fehlt.";return}
     const selectedFile=csvInput.files[0];
     fileName.textContent=selectedFile.name;
-    statusText.textContent="CSV wird eingelesen â¦";
+    statusText.textContent="CSV wird eingelesen …";
     const reader=new FileReader();
 
     reader.onload=async()=>{
@@ -444,9 +639,9 @@ csvInput.addEventListener("change",()=>{
         missingCount.textContent=missingIds;
         errorsCount.textContent=validationErrors+result.errors.length;
         resetPreviewCheck();
-        statusText.textContent="QR-Codes werden erzeugt â¦";
+        statusText.textContent="QR-Codes werden erzeugt …";
         await showTable(data);
-        statusText.textContent="CSV und QR-Codes erfolgreich erzeugt. Jetzt Deezer-HÃ¶rproben prÃ¼fen.";
+        statusText.textContent="CSV und QR-Codes erfolgreich erzeugt. Jetzt Deezer-Hörproben prüfen.";
     };
     reader.onerror=()=>statusText.textContent="Fehler beim Lesen der CSV-Datei.";
     reader.readAsText(selectedFile,"UTF-8");
