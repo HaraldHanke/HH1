@@ -1,924 +1,463 @@
 <!DOCTYPE html>
-<script>
-    const APP_VERSION = 20;
-</script>
-
 <html lang="de">
-
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width,initial-scale=1">
-
-    <title>Hitster Generator V1.0-alpha</title>
-
-    <script src="https://cdn.jsdelivr.net/npm/papaparse@5.5.3/papaparse.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/qrious@4.0.2/dist/qrious.min.js"></script>
-
-<style>
-
-body{
-    margin:0;
-    font-family:Arial,sans-serif;
-    background:#f2f2f7;
-}
-
-header{
-    background:#0A84FF;
-    color:white;
-    padding:18px;
-    font-size:34px;
-    font-weight:bold;
-}
-
-header div{
-    font-size:18px;
-    font-weight:normal;
-    margin-top:6px;
-}
-
-main{
-    max-width:1100px;
-    margin:auto;
-    padding:18px;
-}
-
-.box{
-    background:white;
-    border-radius:18px;
-    padding:18px;
-    margin-bottom:18px;
-    box-shadow:0 2px 8px rgba(0,0,0,.08);
-}
-
-button{
-    width:100%;
-    padding:18px;
-    font-size:24px;
-    border:none;
-    border-radius:14px;
-    background:#e8e8ed;
-    cursor:pointer;
-}
-
-button:hover{
-    background:#dcdce1;
-}
-
-.scroll{
-    overflow:auto;
-    max-height:500px;
-}
-
-table{
-    width:100%;
-    border-collapse:collapse;
-    font-size:18px;
-}
-
-th{
-    background:#efefef;
-    position:sticky;
-    top:0;
-}
-
-th,td{
-    border:1px solid #cccccc;
-    padding:8px;
-    text-align:left;
-    vertical-align:top;
-}
-
-input[type=text]{
-    width:100%;
-    padding:14px;
-    font-size:22px;
-    border:1px solid #cccccc;
-    border-radius:10px;
-    box-sizing:border-box;
-}
-
-canvas{
-    display:block;
-    margin:auto;
-}
-
-.site-footer{
-    max-width:1100px;
-    margin:0 auto;
-    padding:0 18px 30px;
-    text-align:center;
-    font-size:16px;
-}
-
-.site-footer a{
-    color:#0066cc;
-    text-decoration:underline;
-}
-
-.imprint{
-    text-align:left;
-    line-height:1.5;
-}
-
-.imprint h2{
-    margin-top:0;
-}
-
-.imprint p{
-    margin:12px 0;
-}
-
-</style>
-
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>HH Musikquiz Generator</title>
+<script src="https://cdn.jsdelivr.net/npm/papaparse@5.5.3/papaparse.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/qrious@4.0.2/dist/qrious.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-
+<style>
+body{margin:0;font-family:Arial,sans-serif;background:#f2f2f7}
+header{background:#0A84FF;color:#fff;padding:18px;font-size:34px;font-weight:bold}
+header div{font-size:18px;font-weight:normal;margin-top:6px}
+main{max-width:1100px;margin:auto;padding:18px}
+.box{background:#fff;border-radius:18px;padding:18px;margin-bottom:18px;box-shadow:0 2px 8px rgba(0,0,0,.08)}
+button{width:100%;padding:18px;font-size:22px;border:0;border-radius:14px;background:#e8e8ed;cursor:pointer}
+button.primary{background:#0A84FF;color:#fff} button:disabled{opacity:.45;cursor:not-allowed}
+.scroll{overflow:auto;max-height:500px}
+table{width:100%;border-collapse:collapse;font-size:17px}
+th{background:#efefef;position:sticky;top:0;z-index:1}
+th,td{border:1px solid #ccc;padding:8px;text-align:left;vertical-align:top}
+input[type=text],select{width:100%;padding:12px;font-size:18px;border:1px solid #ccc;border-radius:10px;box-sizing:border-box}
+canvas{display:block;margin:auto}
+.grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:15px 0}
+.metric{padding:12px;border:1px solid #ddd;border-radius:12px;background:#f8f8fa}
+.metric b{display:block;margin-bottom:5px}
+.ok{color:#15803d;font-weight:bold}.bad{color:#b91c1c;font-weight:bold}.warn{color:#b45309;font-weight:bold}.pending{color:#555}
+details summary{cursor:pointer;font-size:20px;font-weight:bold}.legal{margin-top:14px;line-height:1.55}.legal h3{margin:22px 0 8px}.legal a{color:#06c}
+@media(max-width:700px){.grid{grid-template-columns:1fr 1fr}}
+</style>
 </head>
-
 <body>
-
-<header>
-    🎵 HH Musikquiz
-
-<div
-    id="versionDisplay"
-    style="font-size:18px;font-weight:normal;margin-top:8px;"
-></div>
-
-</header>
-
+<header>ðµ HH Musikquiz<div id="versionDisplay"></div></header>
 <main>
-
 <div class="box">
-    <input id="csv" type="file" accept=".csv" hidden>
-
-    <button onclick="csv.click()">
-        📂 CSV-Datei auswählen
-    </button>
+<input id="csv" type="file" accept=".csv" hidden>
+<button type="button" onclick="document.getElementById('csv').click()">ð CSV-Datei auswÃ¤hlen</button>
 </div>
 
 <div class="box">
-
-    <b>Datei:</b>
-    <span id="file">Keine</span>
-
-    <br><br>
-
-    <b>Status:</b>
-    <span id="status">Bereit.</span>
-
-    <br><br>
-
-    <b>Karten:</b>
-    <span id="cards">0</span>
-
-    <br>
-
-    <b>Fehlende IDs:</b>
-    <span id="missing">0</span>
-
-    <br>
-
-    <b>Fehler:</b>
-    <span id="errors">0</span>
-
+<b>Datei:</b> <span id="file">Keine</span><br><br>
+<b>Status:</b> <span id="status">Bereit.</span><br><br>
+<b>Karten:</b> <span id="cards">0</span><br>
+<b>Fehlende IDs:</b> <span id="missing">0</span><br>
+<b>Fehler:</b> <span id="errors">0</span>
 </div>
 
 <div class="box">
-
-    <input
-        id="search"
-        type="text"
-        placeholder="🔍 Film, Interpret oder Titel suchen..."
-        style="width:100%; padding:12px; font-size:18px; box-sizing:border-box;"
-    >
-
+<button id="checkPreviews" type="button" class="primary" disabled>Deezer-HÃ¶rproben online prÃ¼fen</button>
+<div class="grid">
+<div class="metric"><b>GeprÃ¼ft</b><span id="checkedCount">0</span></div>
+<div class="metric"><b>HÃ¶rprobe verfÃ¼gbar</b><span id="availableCount">0</span></div>
+<div class="metric"><b>Keine HÃ¶rprobe</b><span id="unavailableCount">0</span></div>
+<div class="metric"><b>Kein passender Treffer</b><span id="noMatchCount">0</span></div>
+<div class="metric"><b>Technischer Fehler</b><span id="technicalCount">0</span></div>
+<div class="metric"><b>Erfolgsquote</b><span id="successRate">0 %</span></div>
+</div>
+<small>Die PrÃ¼fung verwendet dieselbe Deezer-Suche und Trefferbewertung wie der Player. HÃ¶rprobenadressen werden nicht gespeichert.</small>
 </div>
 
-<div class="box scroll">
-    <table id="tbl"></table>
-</div>
+<div class="box"><input id="search" type="text" placeholder="ð Film, Interpret oder Titel suchen..."></div>
+<div class="box scroll"><table id="tbl"></table></div>
 
 <div class="box">
-    <label for="duplexMode">Duplexdruck:</label>
-
+<label for="duplexMode">Duplexdruck:</label>
 <select id="duplexMode">
-    <option value="long">Lange Kante wenden</option>
-    <option value="short">Kurze Kante wenden</option>
+<option value="long">Lange Kante wenden</option>
+<option value="short">Kurze Kante wenden</option>
 </select>
-
-<button id="downloadQr" type="button">
-    Duplex-PDF erstellen
-</button>
-
+<button id="downloadQr" type="button" disabled>Duplex-PDF mit geprÃ¼ften Karten erstellen</button>
 </div>
 
+<div class="box">
+<details>
+<summary>Impressum und Datenschutz</summary>
+<div class="legal">
+<h3>Impressum</h3>
+<p><strong>Angaben gemÃ¤Ã Â§ 5 DDG</strong></p>
+<p>Dr. Harald Hanke<br>Reutgrabenweg 14<br>76297 Stutensee<br>Deutschland</p>
+<p><strong>Kontakt</strong><br>E-Mail: <a href="mailto:harald@hanke.com">harald at hanke.com</a></p>
+<p><strong>Verantwortlich fÃ¼r den Inhalt</strong><br>Dr. Harald Hanke<br>Reutgrabenweg 14<br>76297 Stutensee</p>
+<p>Dieses Angebot ist ein privates Musikquiz-Projekt. Es besteht keine Verbindung zu Deezer, GitHub oder den Rechteinhabern der genannten Filme und MusikstÃ¼cke.</p>
+
+<h3>DatenschutzerklÃ¤rung</h3>
+<p><strong>Verantwortlicher</strong><br>Dr. Harald Hanke, Reutgrabenweg 14, 76297 Stutensee<br>E-Mail: harald at hanke.com</p>
+<p><strong>Hosting Ã¼ber GitHub Pages</strong><br>Diese Seite wird Ã¼ber GitHub Pages bereitgestellt. Beim Aufruf kÃ¶nnen insbesondere die IP-Adresse, Datum und Uhrzeit, aufgerufene Seite sowie technische Browser- und Verbindungsdaten durch GitHub verarbeitet und zu Sicherheitszwecken protokolliert werden.</p>
+<p><strong>Extern geladene Programmbibliotheken</strong><br>Beim Seitenaufruf werden Papa Parse und QRious Ã¼ber jsDelivr sowie jsPDF Ã¼ber cdnjs geladen. Dabei wird eine Verbindung zu den jeweiligen Anbietern hergestellt. Diese erhalten technisch notwendige Verbindungsdaten, insbesondere die IP-Adresse.</p>
+<p><strong>Verarbeitung der CSV-Datei</strong><br>Die ausgewÃ¤hlte CSV-Datei wird ausschlieÃlich lokal im Browser verarbeitet. Die Kartendaten werden nicht auf einen eigenen Server hochgeladen. QR-Codes und PDF-Dateien werden lokal im Browser erzeugt.</p>
+<p><strong>Deezer-HÃ¶rprobenprÃ¼fung</strong><br>Die Deezer-Abfrage wird erst nach BetÃ¤tigung der SchaltflÃ¤che âDeezer-HÃ¶rproben online prÃ¼fenâ gestartet. Dabei werden Interpret, Titel und gegebenenfalls die Versionsangabe an die Deezer-API Ã¼bertragen. ZusÃ¤tzlich fallen bei Deezer technisch notwendige Verbindungsdaten wie die IP-Adresse an. Die HÃ¶rprobenadresse wird nur fÃ¼r die aktuelle PrÃ¼fung verwendet und nicht dauerhaft gespeichert.</p>
+<p><strong>Cookies und lokale Speicherung</strong><br>Der eigene Programmcode setzt keine Cookies, verwendet kein localStorage und fÃ¼hrt keine eigene Reichweitenmessung oder Profilbildung durch. Externe Anbieter kÃ¶nnen Verbindungsdaten nach ihren eigenen Datenschutzbestimmungen verarbeiten.</p>
+<p><strong>Rechtsgrundlage</strong><br>Die Verarbeitung erfolgt, soweit anwendbar, auf Grundlage von Art. 6 Abs. 1 lit. f DSGVO. Das berechtigte Interesse liegt in der sicheren technischen Bereitstellung der Seite und in der vom Nutzer ausgelÃ¶sten FunktionsprÃ¼fung der Musikquiz-Karten.</p>
+<p><strong>Betroffenenrechte</strong><br>Betroffene Personen haben im Rahmen der gesetzlichen Voraussetzungen insbesondere Rechte auf Auskunft, Berichtigung, LÃ¶schung, EinschrÃ¤nkung der Verarbeitung, Widerspruch und DatenÃ¼bertragbarkeit sowie ein Beschwerderecht bei einer DatenschutzaufsichtsbehÃ¶rde.</p>
+</div>
+</details>
+</div>
 </main>
 
-<footer class="site-footer">
-    <p>
-        <a href="#impressum">Impressum</a>
-    </p>
-
-    <section id="impressum" class="box imprint">
-        <h2>Impressum</h2>
-
-        <p>
-            <strong>Angaben gemäß § 5 DDG</strong>
-        </p>
-
-        <p>
-            Dr. Harald Hanke<br>
-            Reutgrabenweg 14<br>
-            76297 Stutensee<br>
-            Deutschland
-        </p>
-
-        <p>
-            <strong>Kontakt</strong><br>
-            E-Mail:
-            <a href="mailto:[E-Mail-Adresse]">
-                harald at hanke.com
-            </a>
-        </p>
-
-        <p>
-            <strong>Verantwortlich für den Inhalt</strong><br>
-            Dr. Harald Hanke<br>
-            Reutgrabenweg 14<br>
-            76297 Stutensee
-        </p>
-
-        <p>
-            Dieses Angebot ist ein privates Musikquiz-Projekt.
-            Es besteht keine Verbindung zu Apple, GitHub oder den
-            Rechteinhabern der genannten Filme und Musikstücke.
-        </p>
-    </section>
-</footer>
-
 <script>
+"use strict";
+
+const APP_VERSION = 21;
 const ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+const SEARCH_LIMIT = 25;
+const REQUEST_TIMEOUT_MS = 15000;
+const MIN_ACCEPTABLE_SCORE = 52;
 
-const csvInput = document.getElementById("csv");
-const fileName = document.getElementById("file");
-const statusText = document.getElementById("status");
-const cardsCount = document.getElementById("cards");
-const missingCount = document.getElementById("missing");
-const errorsCount = document.getElementById("errors");
-const table = document.getElementById("tbl");
-const searchInput = document.getElementById("search");
-const downloadQrButton = document.getElementById("downloadQr");
+const $ = id => document.getElementById(id);
+const csvInput=$("csv"),fileName=$("file"),statusText=$("status"),cardsCount=$("cards"),
+missingCount=$("missing"),errorsCount=$("errors"),table=$("tbl"),searchInput=$("search"),
+downloadQrButton=$("downloadQr"),checkPreviewsButton=$("checkPreviews");
+const checkedCount=$("checkedCount"),availableCount=$("availableCount"),
+unavailableCount=$("unavailableCount"),noMatchCount=$("noMatchCount"),
+technicalCount=$("technicalCount"),successRate=$("successRate");
 
-const versionDisplay =
-    document.getElementById("versionDisplay");
-versionDisplay.textContent =
-    `Version ${APP_VERSION}`;
+$("versionDisplay").textContent=`Version ${APP_VERSION}`;
 
-let data = [];
+let data=[];
+let previewChecks=[];
+let previewCheckComplete=false;
 
-function createId(existingIds) {
+function createId(existingIds){
     let newId;
-
-    do {
-        const values = new Uint32Array(6);
+    do{
+        const values=new Uint32Array(6);
         crypto.getRandomValues(values);
-
-        newId = "FILM-";
-
-        for (let i = 0; i < 6; i++) {
-            newId += ALPHABET[values[i] % ALPHABET.length];
-        }
-    } while (existingIds.has(newId));
-
+        newId="FILM-";
+        for(let i=0;i<6;i++) newId+=ALPHABET[values[i]%ALPHABET.length];
+    }while(existingIds.has(newId));
     existingIds.add(newId);
     return newId;
 }
 
-function createQrCode(canvas, qrData) {
-    new QRious({
-        element: canvas,
-        value: JSON.stringify(qrData),
-        size: 600,
-        level: "M",
-        padding: 24
-    });
-
-    canvas.style.width = "100px";
-    canvas.style.height = "100px";
-
+function createQrCode(canvas,qrData){
+    new QRious({element:canvas,value:JSON.stringify(qrData),size:600,level:"M",padding:24});
+    canvas.style.width="100px";
+    canvas.style.height="100px";
     return Promise.resolve();
 }
 
-async function showTable(rows) {
-    table.innerHTML = "";
-
-    const columns = Object.keys(rows[0] || {});
-    columns.push("QR");
-
-    const headerRow = document.createElement("tr");
-
-    columns.forEach(column => {
-        const th = document.createElement("th");
-        th.textContent = column;
-        headerRow.appendChild(th);
-    });
-
-    table.appendChild(headerRow);
-
-    for (const row of rows) {
-        const tableRow = document.createElement("tr");
-
-        for (const column of columns) {
-            const td = document.createElement("td");
-
-            if (column === "QR") {
-                const canvas = document.createElement("canvas");
-
-                const qrData = {
-                    v: 1,
-                    id: row.ID || "",
-                    artist: row.Interpret || "",
-                    title: row.Titel || "",
-                    version: row.Version || "",
-                    year: row.Jahr || ""
-                };
-
-                try {
-                    await createQrCode(canvas, qrData);
-                    td.appendChild(canvas);
-                } catch (error) {
-                    td.textContent = "QR-Fehler";
-                    console.error(error);
-                }
-            } else {
-                td.textContent = row[column] || "";
-            }
-
-            tableRow.appendChild(td);
-        }
-
-        table.appendChild(tableRow);
-    }
-    
-    downloadQrButton.disabled = rows.length === 0;
+function resetPreviewCheck(){
+    previewChecks=data.map(()=>({status:"pending",message:"Noch nicht geprÃ¼ft"}));
+    previewCheckComplete=false;
+    checkedCount.textContent=availableCount.textContent=unavailableCount.textContent=
+    noMatchCount.textContent=technicalCount.textContent="0";
+    successRate.textContent="0 %";
+    downloadQrButton.disabled=true;
+    checkPreviewsButton.disabled=data.length===0;
 }
 
-function downloadAllQrCodes() {
-    const { jsPDF } = window.jspdf;
+function statusTextFor(check){
+    if(!check||check.status==="pending") return "â³ Noch nicht geprÃ¼ft";
+    if(check.status==="checking") return "ð Wird geprÃ¼ft";
+    if(check.status==="available") return `â VerfÃ¼gbar (${Math.round(check.score)} Punkte)`;
+    if(check.status==="unavailable") return "â Keine HÃ¶rprobe";
+    if(check.status==="nomatch") return "â ï¸ Kein ausreichend passender Treffer";
+    return "ð Technischer Fehler";
+}
 
-    const qrCanvases = Array.from(
-        table.querySelectorAll("canvas")
-    );
+function statusClassFor(check){
+    if(!check||check.status==="pending"||check.status==="checking") return "pending";
+    if(check.status==="available") return "ok";
+    if(check.status==="unavailable") return "bad";
+    return "warn";
+}
 
-    if (!qrCanvases.length) {
-        statusText.textContent =
-            "Keine QR-Codes zum Drucken vorhanden.";
-        return;
-    }
+function updatePreviewCell(index){
+    const cell=table.querySelector(`[data-preview-index="${index}"]`);
+    if(!cell)return;
+    const check=previewChecks[index];
+    cell.textContent=statusTextFor(check);
+    cell.className=statusClassFor(check);
+    cell.title=check?.message||"";
+}
 
-    const duplexMode =
-        document.getElementById("duplexMode").value;
+function updateSummary(){
+    const checked=previewChecks.filter(x=>x.status!=="pending"&&x.status!=="checking").length;
+    const available=previewChecks.filter(x=>x.status==="available").length;
+    const unavailable=previewChecks.filter(x=>x.status==="unavailable").length;
+    const noMatch=previewChecks.filter(x=>x.status==="nomatch").length;
+    const technical=previewChecks.filter(x=>x.status==="technical").length;
+    checkedCount.textContent=checked;
+    availableCount.textContent=available;
+    unavailableCount.textContent=unavailable;
+    noMatchCount.textContent=noMatch;
+    technicalCount.textContent=technical;
+    successRate.textContent=`${checked?Math.round(available/checked*100):0} %`;
+}
 
-    const pdf = new jsPDF({
-        orientation: "portrait",
-        unit: "mm",
-        format: "a4"
+async function showTable(rows){
+    table.innerHTML="";
+    const columns=Object.keys(rows[0]||{});
+    columns.push("QR","HÃ¶rprobe");
+    const head=document.createElement("tr");
+    columns.forEach(column=>{
+        const th=document.createElement("th");
+        th.textContent=column;
+        head.appendChild(th);
     });
+    table.appendChild(head);
 
-    const pageWidth = 210;
-    const pageHeight = 297;
-
-    const columns = 3;
-    const rows = 4;
-    const cardsPerSheet = columns * rows;
-
-    const marginLeft = 9;
-    const marginTop = 12;
-
-    const cardWidth = 64;
-    const cardHeight = 66;
-
-    const contentWidth = columns * cardWidth;
-    const contentHeight = rows * cardHeight;
-
-    const sheetCount =
-        Math.ceil(data.length / cardsPerSheet);
-
-    function getCardPosition(index, isBack) {
-        const position = index % cardsPerSheet;
-
-        let column = position % columns;
-        let row = Math.floor(position / columns);
-
-        if (isBack && duplexMode === "long") {
-            column = columns - 1 - column;
+    for(let rowIndex=0;rowIndex<rows.length;rowIndex++){
+        const row=rows[rowIndex],tr=document.createElement("tr");
+        for(const column of columns){
+            const td=document.createElement("td");
+            if(column==="QR"){
+                const canvas=document.createElement("canvas");
+                canvas.dataset.cardIndex=String(rowIndex);
+                const qrData={v:1,id:row.ID||"",artist:row.Interpret||"",title:row.Titel||"",version:row.Version||"",year:row.Jahr||""};
+                try{await createQrCode(canvas,qrData);td.appendChild(canvas)}
+                catch(error){td.textContent="QR-Fehler";console.error(error)}
+            }else if(column==="HÃ¶rprobe"){
+                td.dataset.previewIndex=String(rowIndex);
+                td.textContent=statusTextFor(previewChecks[rowIndex]);
+                td.className=statusClassFor(previewChecks[rowIndex]);
+            }else td.textContent=row[column]||"";
+            tr.appendChild(td);
         }
+        table.appendChild(tr);
+    }
+}
 
-        if (isBack && duplexMode === "short") {
-            row = rows - 1 - row;
+/* Ab hier identisch mit der Such- und Trefferlogik des Players. */
+function normalizeText(value){
+    return String(value??"").toLocaleLowerCase("de-DE").normalize("NFD")
+        .replace(/[\u0300-\u036f]/g,"").replace(/&/g," und ")
+        .replace(/[()[\]{}]/g," ").replace(/[^a-z0-9]+/g," ")
+        .replace(/\s+/g," ").trim();
+}
+function tokenize(value){const n=normalizeText(value);return n?n.split(" "):[]}
+function tokenSimilarity(expected,actual){
+    const expectedTokens=tokenize(expected),actualTokens=new Set(tokenize(actual));
+    if(expectedTokens.length===0)return 1;
+    return expectedTokens.filter(token=>actualTokens.has(token)).length/expectedTokens.length;
+}
+function containsAllExpectedWords(expected,actual){
+    const expectedTokens=tokenize(expected),actualNormalized=` ${normalizeText(actual)} `;
+    return expectedTokens.length>0&&expectedTokens.every(token=>actualNormalized.includes(` ${token} `));
+}
+function buildSearchText(card){return[card.artist,card.title,card.version].filter(Boolean).join(" ")}
+function deezerSearchJsonp(searchText){
+    return new Promise((resolve,reject)=>{
+        const callbackName=`hhDeezerCallback_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+        const script=document.createElement("script");
+        const timeout=window.setTimeout(()=>{cleanup();reject(new Error("Deezer hat innerhalb von 15 Sekunden nicht geantwortet."))},REQUEST_TIMEOUT_MS);
+        function cleanup(){
+            window.clearTimeout(timeout);
+            try{delete window[callbackName]}catch{window[callbackName]=undefined}
+            script.remove();
         }
-
-        return {
-            x: marginLeft + column * cardWidth,
-            y: marginTop + row * cardHeight
+        window[callbackName]=resultData=>{
+            cleanup();
+            if(!resultData||!Array.isArray(resultData.data)){reject(new Error("Deezer hat keine verwertbare Antwort geliefert."));return}
+            resolve(resultData.data);
         };
+        script.onerror=()=>{cleanup();reject(new Error("Die Deezer-Suche konnte nicht geladen werden."))};
+        const params=new URLSearchParams({q:searchText,limit:String(SEARCH_LIMIT),output:"jsonp",callback:callbackName});
+        script.src=`https://api.deezer.com/search?${params.toString()}`;
+        script.async=true;
+        script.referrerPolicy="no-referrer";
+        document.head.appendChild(script);
+    });
+}
+function scoreResult(card,result){
+    const resultArtist=result.artist?.name??"",resultTitle=result.title??"",resultAlbum=result.album?.title??"",combined=`${resultTitle} ${resultAlbum}`;
+    let score=0;
+    const artistSimilarity=tokenSimilarity(card.artist,resultArtist),titleSimilarity=tokenSimilarity(card.title,resultTitle);
+    score+=artistSimilarity*42;
+    score+=titleSimilarity*46;
+    if(normalizeText(card.artist)===normalizeText(resultArtist))score+=18;
+    else if(containsAllExpectedWords(card.artist,resultArtist))score+=10;
+    if(normalizeText(card.title)===normalizeText(resultTitle))score+=22;
+    else if(containsAllExpectedWords(card.title,resultTitle))score+=12;
+    if(card.version){
+        const versionSimilarity=tokenSimilarity(card.version,combined);
+        score+=versionSimilarity*24;
+        if(containsAllExpectedWords(card.version,combined))score+=10;else score-=8;
+    }
+    const unwantedTerms=["karaoke","tribute","cover","instrumental"];
+    const requestedText=normalizeText(`${card.title} ${card.version}`);
+    const resultText=normalizeText(`${resultTitle} ${resultAlbum} ${resultArtist}`);
+    for(const term of unwantedTerms)if(resultText.includes(term)&&!requestedText.includes(term))score-=25;
+    const optionalVariants=["live","remix","remastered","acoustic"];
+    for(const term of optionalVariants)if(resultText.includes(term)&&!requestedText.includes(term))score-=10;
+    if(!result.preview)score-=100;
+    return score;
+}
+function chooseBestResult(card,results){
+    const candidates=results.filter(result=>typeof result.preview==="string"&&result.preview.length>0)
+        .map(result=>({result,score:scoreResult(card,result)})).sort((a,b)=>b.score-a.score);
+    if(candidates.length===0)throw new Error("Deezer hat keinen Treffer mit HÃ¶rprobe gefunden.");
+    const best=candidates[0];
+    if(best.score<MIN_ACCEPTABLE_SCORE)throw new Error("Es wurde kein ausreichend passender Deezer-Treffer gefunden.");
+    return best;
+}
+/* Ende der unverÃ¤nderten Player-Suchlogik. */
+
+const wait=ms=>new Promise(resolve=>setTimeout(resolve,ms));
+
+async function checkAllPreviews(){
+    if(!data.length)return;
+    checkPreviewsButton.disabled=true;
+    downloadQrButton.disabled=true;
+    previewCheckComplete=false;
+    statusText.textContent=`Deezer-PrÃ¼fung gestartet: 0 von ${data.length} Karten.`;
+
+    for(let index=0;index<data.length;index++){
+        const row=data[index];
+        previewChecks[index]={status:"checking",message:"Die Karte wird gerade geprÃ¼ft."};
+        updatePreviewCell(index);
+        const card={artist:String(row.Interpret||"").trim(),title:String(row.Titel||"").trim(),version:String(row.Version||"").trim()};
+        try{
+            const results=await deezerSearchJsonp(buildSearchText(card));
+            const best=chooseBestResult(card,results);
+            previewChecks[index]={status:"available",message:`${best.result.artist?.name||""} â ${best.result.title||""}`,score:best.score};
+        }catch(error){
+            const message=error?.message||"Unbekannter PrÃ¼fungsfehler.";
+            previewChecks[index]=message.includes("keinen Treffer mit HÃ¶rprobe")
+                ?{status:"unavailable",message}
+                :message.includes("kein ausreichend passender")
+                    ?{status:"nomatch",message}
+                    :{status:"technical",message};
+        }
+        updatePreviewCell(index);
+        updateSummary();
+        statusText.textContent=`Deezer-PrÃ¼fung: ${index+1} von ${data.length} Karten.`;
+        if(index<data.length-1)await wait(250);
     }
 
-    function drawCutMarks() {
-        pdf.setDrawColor(0);
-        pdf.setLineWidth(0.15);
+    previewCheckComplete=true;
+    checkPreviewsButton.disabled=false;
+    const usable=previewChecks.filter(x=>x.status==="available").length;
+    downloadQrButton.disabled=usable===0;
+    statusText.textContent=`PrÃ¼fung abgeschlossen: ${usable} von ${data.length} Karten verwendbar.`;
+}
 
-        const markLength = 3;
+function downloadAllQrCodes(){
+    if(!previewCheckComplete){statusText.textContent="Bitte zuerst alle Deezer-HÃ¶rproben online prÃ¼fen.";return}
+    const {jsPDF}=window.jspdf;
+    const printCards=data.map((card,index)=>({
+        card,check:previewChecks[index],
+        canvas:table.querySelector(`canvas[data-card-index="${index}"]`)
+    })).filter(item=>item.check?.status==="available"&&item.canvas);
 
-        for (let column = 0; column <= columns; column++) {
-            const x = marginLeft + column * cardWidth;
+    if(!printCards.length){statusText.textContent="Keine geprÃ¼ften Karten mit HÃ¶rprobe vorhanden.";return}
 
-            pdf.line(
-                x,
-                marginTop - markLength,
-                x,
-                marginTop
-            );
+    const duplexMode=$("duplexMode").value;
+    const pdf=new jsPDF({orientation:"portrait",unit:"mm",format:"a4"});
+    const pageWidth=210,pageHeight=297,columns=3,rows=4,cardsPerSheet=12;
+    const marginLeft=9,marginTop=12,cardWidth=64,cardHeight=66;
+    const contentWidth=columns*cardWidth,contentHeight=rows*cardHeight;
+    const sheetCount=Math.ceil(printCards.length/cardsPerSheet);
 
-            pdf.line(
-                x,
-                marginTop + contentHeight,
-                x,
-                marginTop + contentHeight + markLength
-            );
-        }
-
-        for (let row = 0; row <= rows; row++) {
-            const y = marginTop + row * cardHeight;
-
-            pdf.line(
-                marginLeft - markLength,
-                y,
-                marginLeft,
-                y
-            );
-
-            pdf.line(
-                marginLeft + contentWidth,
-                y,
-                marginLeft + contentWidth + markLength,
-                y
-            );
-        }
+    function getCardPosition(index,isBack){
+        const position=index%cardsPerSheet;
+        let column=position%columns,row=Math.floor(position/columns);
+        if(isBack&&duplexMode==="long")column=columns-1-column;
+        if(isBack&&duplexMode==="short")row=rows-1-row;
+        return{x:marginLeft+column*cardWidth,y:marginTop+row*cardHeight};
     }
-
-    function addFooter(pageNumber, totalPages, side) {
+    function drawCutMarks(){
+        pdf.setDrawColor(0);pdf.setLineWidth(.15);const m=3;
+        for(let c=0;c<=columns;c++){const x=marginLeft+c*cardWidth;pdf.line(x,marginTop-m,x,marginTop);pdf.line(x,marginTop+contentHeight,x,marginTop+contentHeight+m)}
+        for(let r=0;r<=rows;r++){const y=marginTop+r*cardHeight;pdf.line(marginLeft-m,y,marginLeft,y);pdf.line(marginLeft+contentWidth,y,marginLeft+contentWidth+m,y)}
+    }
+    function addFooter(page,total,side){
         pdf.setFontSize(7);
-
-        pdf.text(
-            `HH Musikquiz – Version ${APP_VERSION} – ${side}`,
-            10,
-            pageHeight - 5
-        );
-
-        pdf.text(
-            `Seite ${pageNumber}/${totalPages}`,
-            pageWidth - 10,
-            pageHeight - 5,
-            { align: "right" }
-        );
+        pdf.text(`HH Musikquiz â Version ${APP_VERSION} â ${side}`,10,pageHeight-5);
+        pdf.text(`Seite ${page}/${total}`,pageWidth-10,pageHeight-5,{align:"right"});
     }
 
-    function addWrappedText(text, x, y, width, fontSize) {
-        if (!text) {
-            return y;
-        }
+    const totalPages=sheetCount*2;let currentPage=0;
+    for(let sheet=0;sheet<sheetCount;sheet++){
+        if(currentPage>0)pdf.addPage();
+        currentPage++;drawCutMarks();
+        const start=sheet*cardsPerSheet,end=Math.min(start+cardsPerSheet,printCards.length);
 
-        pdf.setFontSize(fontSize);
-
-        const lines = pdf.splitTextToSize(
-            String(text),
-            width
-        );
-
-        pdf.text(lines, x, y);
-
-        return y + lines.length * (fontSize * 0.38);
-    }
-
-    const totalPages = sheetCount * 2;
-    let currentPage = 0;
-
-    for (
-        let sheetIndex = 0;
-        sheetIndex < sheetCount;
-        sheetIndex++
-    ) {
-        if (currentPage > 0) {
-            pdf.addPage();
-        }
-
-        currentPage++;
-
-        drawCutMarks();
-
-        const startIndex =
-            sheetIndex * cardsPerSheet;
-
-        const endIndex = Math.min(
-            startIndex + cardsPerSheet,
-            data.length
-        );
-
-        for (
-            let cardIndex = startIndex;
-            cardIndex < endIndex;
-            cardIndex++
-        ) {
-            const card = data[cardIndex];
-
-            const position =
-                getCardPosition(cardIndex, false);
-
-            const qrCanvas = qrCanvases[cardIndex];
-
-const qrImage =
-    qrCanvas.toDataURL("image/png");
-
-const qrOriginalWidth =
-    qrCanvas.width || 100;
-
-const qrOriginalHeight =
-    qrCanvas.height || 100;
-
-const maxQrSize = 43;
-
-const scale = Math.min(
-    maxQrSize / qrOriginalWidth,
-    maxQrSize / qrOriginalHeight
-);
-
-const qrWidth =
-    qrOriginalWidth * scale;
-
-const qrHeight =
-    qrOriginalHeight * scale;
-
-const qrX =
-    position.x +
-    (cardWidth - qrWidth) / 2;
-
-const qrY =
-    position.y + 7 +
-    (maxQrSize - qrHeight) / 2;
-
-pdf.addImage(
-    qrImage,
-    "PNG",
-    qrX,
-    qrY,
-    qrWidth,
-    qrHeight
-);
-
+        for(let i=start;i<end;i++){
+            const item=printCards[i],card=item.card,pos=getCardPosition(i,false);
+            const qrSize=43,qrX=pos.x+(cardWidth-qrSize)/2,qrY=pos.y+(cardHeight-qrSize)/2-3;
+            pdf.addImage(item.canvas.toDataURL("image/png"),"PNG",qrX,qrY,qrSize,qrSize);
             pdf.setFontSize(8);
-
-            pdf.text(
-                String(card.ID || ""),
-                position.x + cardWidth / 2,
-                position.y + 56,
-                { align: "center" }
-            );
+            pdf.text(String(card.ID||""),pos.x+cardWidth/2,pos.y+cardHeight-5,{align:"center"});
         }
+        addFooter(currentPage,totalPages,"Vorderseiten");
 
-        addFooter(
-            currentPage,
-            totalPages,
-            "Vorderseiten"
-        );
+        pdf.addPage();currentPage++;drawCutMarks();
+        for(let i=start;i<end;i++){
+            const card=printCards[i].card,pos=getCardPosition(i,true),centerX=pos.x+cardWidth/2,textWidth=cardWidth-10;
+            pdf.setFont("helvetica","bold");pdf.setFontSize(10);
+            const filmLines=pdf.splitTextToSize(String(card.Film||""),textWidth);
+            pdf.setFont("helvetica","normal");pdf.setFontSize(8);
+            const interpretLines=pdf.splitTextToSize(String(card.Interpret||""),textWidth);
+            const titleLines=pdf.splitTextToSize(String(card.Titel||""),textWidth);
+            const versionLines=pdf.splitTextToSize(String(card.Version||""),textWidth);
+            pdf.setFontSize(7);
+            const infoLines=pdf.splitTextToSize(String(card.Info||""),textWidth);
+            const fh=filmLines.length*4.2,ih=interpretLines.length*3.2,th=titleLines.length*3.2,vh=versionLines.length*3.2,yh=9,infoh=infoLines.length*2.8,s=2;
+            const hasVersion=Boolean(String(card.Version||"").trim());
+            let y=pos.y+(cardHeight-(fh+ih+th+(hasVersion?vh:0)+yh+infoh+s*5))/2;
 
-        pdf.addPage();
-        currentPage++;
-
-        drawCutMarks();
-
-        for (
-            let cardIndex = startIndex;
-            cardIndex < endIndex;
-            cardIndex++
-        ) {
-            const card = data[cardIndex];
-
-            const position =
-                getCardPosition(cardIndex, true);
-
-                const centerX =
-    position.x + cardWidth / 2;
-
-const textWidth =
-    cardWidth - 10;
-
-pdf.setFont(
-    "helvetica",
-    "bold"
-);
-
-pdf.setFontSize(10);
-
-const filmLines =
-    pdf.splitTextToSize(
-        String(card.Film || ""),
-        textWidth
-    );
-
-pdf.setFont(
-    "helvetica",
-    "normal"
-);
-
-pdf.setFontSize(8);
-
-const interpretLines =
-    pdf.splitTextToSize(
-        String(card.Interpret || ""),
-        textWidth
-    );
-
-const titleLines =
-    pdf.splitTextToSize(
-        String(card.Titel || ""),
-        textWidth
-    );
-
-const versionLines =
-    pdf.splitTextToSize(
-        String(card.Version || ""),
-        textWidth
-    );
-
-pdf.setFontSize(7);
-
-const infoLines =
-    pdf.splitTextToSize(
-        String(card.Info || ""),
-        textWidth
-    );
-
-const filmHeight =
-    filmLines.length * 4.2;
-
-const interpretHeight =
-    interpretLines.length * 3.2;
-
-const titleHeight =
-    titleLines.length * 3.2;
-
-const versionHeight =
-    versionLines.length * 3.2;
-
-const yearHeight = 9;
-
-const infoHeight =
-    infoLines.length * 2.8;
-
-const spacing = 2;
-
-const totalTextHeight =
-    filmHeight +
-    interpretHeight +
-    titleHeight +
-    versionHeight +
-    yearHeight +
-    infoHeight +
-    spacing * 5;
-
-let textY =
-    position.y +
-    (cardHeight - totalTextHeight) / 2;
-
-pdf.setFont(
-    "helvetica",
-    "bold"
-);
-
-pdf.setFontSize(10);
-
-pdf.text(
-    filmLines,
-    centerX,
-    textY,
-    { align: "center" }
-);
-
-textY +=
-    filmHeight + spacing;
-
-pdf.setFont(
-    "helvetica",
-    "normal"
-);
-
-pdf.setFontSize(8);
-
-pdf.text(
-    interpretLines,
-    centerX,
-    textY,
-    { align: "center" }
-);
-
-textY +=
-    interpretHeight + spacing;
-
-pdf.text(
-    titleLines,
-    centerX,
-    textY,
-    { align: "center" }
-);
-
-textY +=
-    titleHeight + spacing;
-
-if (String(card.Version || "").trim()) {
-    pdf.text(
-        versionLines,
-        centerX,
-        textY,
-        { align: "center" }
-    );
-
-    textY +=
-        versionHeight + spacing;
-}
-
-pdf.setFont(
-    "helvetica",
-    "bold"
-);
-
-pdf.setFontSize(24);
-
-pdf.text(
-    String(card.Jahr || ""),
-    centerX,
-    textY + 7,
-    { align: "center" }
-);
-
-textY +=
-    yearHeight + spacing;
-
-pdf.setFont(
-    "helvetica",
-    "normal"
-);
-
-pdf.setFontSize(7);
-
-if (String(card.Info || "").trim()) {
-    pdf.text(
-        infoLines,
-        centerX,
-        textY,
-        { align: "center" }
-    );
-}
-
-pdf.setFontSize(6);
-
-pdf.text(
-    String(card.ID || ""),
-    centerX,
-    position.y + cardHeight - 3,
-    { align: "center" }
-);
-}
-
-        addFooter(
-            currentPage,
-            totalPages,
-            "Rückseiten"
-        );
+            pdf.setFont("helvetica","bold");pdf.setFontSize(10);pdf.text(filmLines,centerX,y,{align:"center"});y+=fh+s;
+            pdf.setFont("helvetica","normal");pdf.setFontSize(8);pdf.text(interpretLines,centerX,y,{align:"center"});y+=ih+s;
+            pdf.text(titleLines,centerX,y,{align:"center"});y+=th+s;
+            if(hasVersion){pdf.text(versionLines,centerX,y,{align:"center"});y+=vh+s}
+            pdf.setFont("helvetica","bold");pdf.setFontSize(24);pdf.text(String(card.Jahr||""),centerX,y+7,{align:"center"});y+=yh+s;
+            pdf.setFont("helvetica","normal");pdf.setFontSize(7);if(String(card.Info||"").trim())pdf.text(infoLines,centerX,y,{align:"center"});
+            pdf.setFontSize(6);pdf.text(String(card.ID||""),centerX,pos.y+cardHeight-3,{align:"center"});
+        }
+        addFooter(currentPage,totalPages,"RÃ¼ckseiten");
     }
 
-    pdf.save(
-        "HH-Musikquiz-Duplex-Karten.pdf"
-    );
-
-    statusText.textContent =
-        `PDF mit ${totalPages} Seiten wurde erstellt.`;
+    pdf.save("HH-Musikquiz-Duplex-Karten.pdf");
+    statusText.textContent=`PDF mit ${printCards.length} geprÃ¼ften Karten und ${totalPages} Seiten wurde erstellt.`;
 }
 
-csvInput.addEventListener("change", () => {
-    if (!csvInput.files.length) {
-        return;
-    }
+csvInput.addEventListener("change",()=>{
+    if(!csvInput.files.length)return;
+    if(typeof Papa==="undefined"){statusText.textContent="Fehler: CSV-Bibliothek fehlt.";return}
+    if(typeof QRious==="undefined"){statusText.textContent="Fehler: QR-Code-Bibliothek fehlt.";return}
+    const selectedFile=csvInput.files[0];
+    fileName.textContent=selectedFile.name;
+    statusText.textContent="CSV wird eingelesen â¦";
+    const reader=new FileReader();
 
-    if (typeof Papa === "undefined") {
-        statusText.textContent = "Fehler: CSV-Bibliothek fehlt.";
-        return;
-    }
+    reader.onload=async()=>{
+        const result=Papa.parse(reader.result,{header:true,skipEmptyLines:true,transformHeader:h=>h.trim()});
+        data=result.data;
+        let missingIds=0,validationErrors=0;
+        const existingIds=new Set();
 
-    if (typeof QRious === "undefined") {
-    statusText.textContent = "Fehler: QR-Code-Bibliothek fehlt.";
-    return;
-}
-
-    const selectedFile = csvInput.files[0];
-    fileName.textContent = selectedFile.name;
-    statusText.textContent = "CSV wird eingelesen …";
-
-    const reader = new FileReader();
-
-    reader.onload = async () => {
-        const result = Papa.parse(reader.result, {
-            header: true,
-            skipEmptyLines: true,
-            transformHeader: header => header.trim()
+        data.forEach(row=>{
+            if(row.ID&&row.ID.trim()){
+                const currentId=row.ID.trim();
+                if(existingIds.has(currentId)){validationErrors++;row.ID=createId(existingIds);missingIds++}
+                else{row.ID=currentId;existingIds.add(currentId)}
+            }else{row.ID=createId(existingIds);missingIds++}
+            if(!String(row.Film||"").trim())validationErrors++;
+            if(!String(row.Interpret||"").trim())validationErrors++;
+            if(!String(row.Titel||"").trim())validationErrors++;
+            if(!/^\d{4}$/.test(String(row.Jahr||"").trim()))validationErrors++;
         });
 
-        if (result.errors.length > 0) {
-            console.error(result.errors);
-        }
-
-        data = result.data;
-
-        let missingIds = 0;
-        let validationErrors = 0;
-
-        const existingIds = new Set();
-
-        data.forEach(row => {
-            if (row.ID && row.ID.trim()) {
-                const currentId = row.ID.trim();
-
-                if (existingIds.has(currentId)) {
-                    validationErrors++;
-                    row.ID = createId(existingIds);
-                    missingIds++;
-                } else {
-                    row.ID = currentId;
-                    existingIds.add(currentId);
-                }
-            } else {
-                row.ID = createId(existingIds);
-                missingIds++;
-            }
-
-            if (!String(row.Film || "").trim()) {
-                validationErrors++;
-            }
-
-            if (!String(row.Interpret || "").trim()) {
-                validationErrors++;
-            }
-
-            if (!String(row.Titel || "").trim()) {
-                validationErrors++;
-            }
-
-            if (!/^[0-9]{4}$/.test(String(row.Jahr || "").trim())) {
-                validationErrors++;
-            }
-        });
-
-        cardsCount.textContent = data.length;
-        missingCount.textContent = missingIds;
-        errorsCount.textContent =
-            validationErrors + result.errors.length;
-
-        statusText.textContent = "QR-Codes werden erzeugt …";
-
+        cardsCount.textContent=data.length;
+        missingCount.textContent=missingIds;
+        errorsCount.textContent=validationErrors+result.errors.length;
+        resetPreviewCheck();
+        statusText.textContent="QR-Codes werden erzeugt â¦";
         await showTable(data);
-
-        statusText.textContent = "CSV und QR-Codes erfolgreich erzeugt.";
+        statusText.textContent="CSV und QR-Codes erfolgreich erzeugt. Jetzt Deezer-HÃ¶rproben prÃ¼fen.";
     };
-
-    reader.onerror = () => {
-        statusText.textContent = "Fehler beim Lesen der CSV-Datei.";
-    };
-
-    reader.readAsText(selectedFile, "UTF-8");
+    reader.onerror=()=>statusText.textContent="Fehler beim Lesen der CSV-Datei.";
+    reader.readAsText(selectedFile,"UTF-8");
 });
 
-if (searchInput) {
-    searchInput.addEventListener("input", () => {
-        const searchTerm = searchInput.value
-            .trim()
-            .toLowerCase();
-
-        const rows = table.getElementsByTagName("tr");
-
-        for (let i = 1; i < rows.length; i++) {
-            const rowText = rows[i].innerText.toLowerCase();
-
-            rows[i].style.display =
-                rowText.includes(searchTerm) ? "" : "none";
-        }
-    });
-}
-
-downloadQrButton.addEventListener(
-    "click",
-    downloadAllQrCodes
-);
-
+searchInput.addEventListener("input",()=>{
+    const term=searchInput.value.trim().toLowerCase(),rows=table.getElementsByTagName("tr");
+    for(let i=1;i<rows.length;i++)rows[i].style.display=rows[i].innerText.toLowerCase().includes(term)?"":"none";
+});
+checkPreviewsButton.addEventListener("click",checkAllPreviews);
+downloadQrButton.addEventListener("click",downloadAllQrCodes);
 </script>
-
-</body></html>
+</body>
+</html>
