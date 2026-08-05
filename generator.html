@@ -156,6 +156,23 @@ canvas{
 .warn{color:var(--orange);font-weight:bold}
 .pending{color:var(--muted)}
 
+.preview-result{
+    min-width:260px;
+    line-height:1.4;
+}
+
+.preview-result strong{
+    display:block;
+    margin-bottom:4px;
+}
+
+.preview-reason{
+    display:block;
+    color:var(--text);
+    font-size:14px;
+    font-weight:normal;
+}
+
 details summary{
     cursor:pointer;
     font-size:20px;
@@ -174,6 +191,17 @@ details summary{
 }
 
 .legal a{color:var(--green-dark)}
+
+
+.check-legend{
+    margin:14px 0 0;
+    padding:12px;
+    border-left:5px solid var(--green-dark);
+    border-radius:10px;
+    background:#f8fbf8;
+    color:var(--text);
+    line-height:1.5;
+}
 
 @media(max-width:700px){
     .grid{grid-template-columns:1fr 1fr}
@@ -206,7 +234,7 @@ details summary{
 <div class="metric"><b>Technischer Fehler</b><span id="technicalCount">0</span></div>
 <div class="metric"><b>Erfolgsquote</b><span id="successRate">0 %</span></div>
 </div>
-<small>Die Prüfung verwendet dieselbe Deezer-Suche und Trefferbewertung wie der Player. Zwischen den Abfragen sowie nach jeweils 20 Karten werden Sicherheitspausen eingelegt. Hörprobenadressen werden nicht gespeichert.</small>
+<small>Die Prüfung verwendet dieselbe Deezer-Suche und Trefferbewertung wie der Player. Hörprobenadressen werden nicht gespeichert.</small>
 </div>
 
 <div class="box"><input id="search" type="text" placeholder="🔍 Film, Interpret oder Titel suchen..."></div>
@@ -249,11 +277,12 @@ details summary{
 <script>
 "use strict";
 
-const APP_VERSION = 22;
+const APP_VERSION = 24;
 const ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
 const SEARCH_LIMIT = 25;
 const REQUEST_TIMEOUT_MS = 15000;
 const MIN_ACCEPTABLE_SCORE = 52;
+const BORDERLINE_SCORE = 70;
 const REQUEST_DELAY_MS = 1000;
 const BATCH_SIZE = 20;
 const BATCH_PAUSE_MS = 5000;
@@ -303,10 +332,11 @@ function resetPreviewCheck(){
     checkPreviewsButton.disabled=data.length===0;
 }
 
-function statusTextFor(check){
+function statusHeadingFor(check){
     if(!check||check.status==="pending") return "⏳ Noch nicht geprüft";
     if(check.status==="checking") return "🔄 Wird geprüft";
-    if(check.status==="available") return `✅ Verfügbar (${Math.round(check.score)} Punkte)`;
+    if(check.status==="available") return "✅ Verfügbar";
+    if(check.status==="borderline") return "⚠️ Verfügbar, aber knapp";
     if(check.status==="unavailable") return "❌ Keine Hörprobe";
     if(check.status==="nomatch") return "⚠️ Kein ausreichend passender Treffer";
     return "🌐 Technischer Fehler";
@@ -322,15 +352,34 @@ function statusClassFor(check){
 function updatePreviewCell(index){
     const cell=table.querySelector(`[data-preview-index="${index}"]`);
     if(!cell)return;
+
     const check=previewChecks[index];
-    cell.textContent=statusTextFor(check);
-    cell.className=statusClassFor(check);
-    cell.title=check?.message||"";
+
+    cell.className=`preview-result ${statusClassFor(check)}`;
+    cell.title="";
+
+    const heading=document.createElement("strong");
+    heading.textContent=statusHeadingFor(check);
+    cell.replaceChildren(heading);
+
+    if(check?.reason){
+        const reason=document.createElement("span");
+        reason.className="preview-reason";
+        reason.textContent=check.reason;
+        cell.appendChild(reason);
+    }
+
+    if(check?.match){
+        const match=document.createElement("span");
+        match.className="preview-reason";
+        match.textContent=`Gefundener Treffer: ${check.match}`;
+        cell.appendChild(match);
+    }
 }
 
 function updateSummary(){
     const checked=previewChecks.filter(x=>x.status!=="pending"&&x.status!=="checking").length;
-    const available=previewChecks.filter(x=>x.status==="available").length;
+    const available=previewChecks.filter(x=>x.status==="available"||x.status==="borderline").length;
     const unavailable=previewChecks.filter(x=>x.status==="unavailable").length;
     const noMatch=previewChecks.filter(x=>x.status==="nomatch").length;
     const technical=previewChecks.filter(x=>x.status==="technical").length;
@@ -416,36 +465,148 @@ function deezerSearchJsonp(searchText){
         document.head.appendChild(script);
     });
 }
-function scoreResult(card,result){
-    const resultArtist=result.artist?.name??"",resultTitle=result.title??"",resultAlbum=result.album?.title??"",combined=`${resultTitle} ${resultAlbum}`;
+// Interner Vertrauenswert, keine Prozentangabe.
+    // Bewertet werden Künstler, Titel und Version; unerwünschte Varianten führen zu Abzügen.
+function analyzeResult(card,result){
+    const resultArtist=result.artist?.name??"";
+    const resultTitle=result.title??"";
+    const resultAlbum=result.album?.title??"";
+    const combined=`${resultTitle} ${resultAlbum}`;
+
     let score=0;
-    const artistSimilarity=tokenSimilarity(card.artist,resultArtist),titleSimilarity=tokenSimilarity(card.title,resultTitle);
+    const reasons=[];
+
+    const artistSimilarity=tokenSimilarity(card.artist,resultArtist);
+    const titleSimilarity=tokenSimilarity(card.title,resultTitle);
+
     score+=artistSimilarity*42;
     score+=titleSimilarity*46;
-    if(normalizeText(card.artist)===normalizeText(resultArtist))score+=18;
-    else if(containsAllExpectedWords(card.artist,resultArtist))score+=10;
-    if(normalizeText(card.title)===normalizeText(resultTitle))score+=22;
-    else if(containsAllExpectedWords(card.title,resultTitle))score+=12;
+
+    if(normalizeText(card.artist)===normalizeText(resultArtist)){
+        score+=18;
+    }else if(containsAllExpectedWords(card.artist,resultArtist)){
+        score+=10;
+    }else if(artistSimilarity<0.75){
+        reasons.push("Interpret stimmt nur teilweise überein");
+    }
+
+    if(normalizeText(card.title)===normalizeText(resultTitle)){
+        score+=22;
+    }else if(containsAllExpectedWords(card.title,resultTitle)){
+        score+=12;
+    }else if(titleSimilarity<0.75){
+        reasons.push("Titel stimmt nur teilweise überein");
+    }
+
     if(card.version){
         const versionSimilarity=tokenSimilarity(card.version,combined);
         score+=versionSimilarity*24;
-        if(containsAllExpectedWords(card.version,combined))score+=10;else score-=8;
+
+        if(containsAllExpectedWords(card.version,combined)){
+            score+=10;
+        }else{
+            score-=8;
+            reasons.push(`Version „${card.version}“ wurde im Treffer nicht eindeutig gefunden`);
+        }
     }
+
     const unwantedTerms=["karaoke","tribute","cover","instrumental"];
     const requestedText=normalizeText(`${card.title} ${card.version}`);
     const resultText=normalizeText(`${resultTitle} ${resultAlbum} ${resultArtist}`);
-    for(const term of unwantedTerms)if(resultText.includes(term)&&!requestedText.includes(term))score-=25;
+
+    for(const term of unwantedTerms){
+        if(resultText.includes(term)&&!requestedText.includes(term)){
+            score-=25;
+            reasons.push(`Treffer enthält die unerwünschte Variante „${term}“`);
+        }
+    }
+
     const optionalVariants=["live","remix","remastered","acoustic"];
-    for(const term of optionalVariants)if(resultText.includes(term)&&!requestedText.includes(term))score-=10;
-    if(!result.preview)score-=100;
-    return score;
+
+    for(const term of optionalVariants){
+        if(resultText.includes(term)&&!requestedText.includes(term)){
+            score-=10;
+            reasons.push(`Treffer ist als „${term}“ gekennzeichnet, obwohl dies nicht angefordert wurde`);
+        }
+    }
+
+    if(!result.preview){
+        score-=100;
+        reasons.push("Der Treffer besitzt keine Hörprobe");
+    }
+
+    if(reasons.length===0){
+        reasons.push("Interpret, Titel und Versionsangabe passen eindeutig");
+    }
+
+    return{
+        score,
+        reasons,
+        artistSimilarity,
+        titleSimilarity
+    };
 }
+
+function scoreResult(card,result){
+    return analyzeResult(card,result).score;
+}
+
 function chooseBestResult(card,results){
-    const candidates=results.filter(result=>typeof result.preview==="string"&&result.preview.length>0)
-        .map(result=>({result,score:scoreResult(card,result)})).sort((a,b)=>b.score-a.score);
-    if(candidates.length===0)throw new Error("Deezer hat keinen Treffer mit Hörprobe gefunden.");
+    const previewResults=results.filter(result=>
+        typeof result.preview==="string"&&result.preview.length>0
+    );
+
+    if(previewResults.length===0){
+        const error=new Error("Deezer hat keinen Treffer mit Hörprobe gefunden.");
+        error.reason=results.length
+            ? `${results.length} Suchtreffer gefunden, aber keiner davon besitzt eine Hörprobe.`
+            : "Deezer hat zu dieser Suchanfrage keinen Treffer geliefert.";
+        throw error;
+    }
+
+    const candidates=previewResults
+        .map(result=>{
+            const analysis=analyzeResult(card,result);
+            return{
+                result,
+                score:analysis.score,
+                reasons:analysis.reasons
+            };
+        })
+        .sort((a,b)=>b.score-a.score);
+
     const best=candidates[0];
-    if(best.score<MIN_ACCEPTABLE_SCORE)throw new Error("Es wurde kein ausreichend passender Deezer-Treffer gefunden.");
+    const second=candidates[1];
+
+    if(best.score<MIN_ACCEPTABLE_SCORE){
+        const error=new Error("Es wurde kein ausreichend passender Deezer-Treffer gefunden.");
+        error.best=best;
+        error.reason=
+            `${best.reasons.join("; ")}. `+
+            `Der beste Treffer blieb unter der erforderlichen Übereinstimmung.`;
+        throw error;
+    }
+
+    best.borderline=
+        best.score<BORDERLINE_SCORE||
+        (second&&best.score-second.score<8);
+
+    if(best.borderline){
+        const reasons=[...best.reasons];
+
+        if(best.score<BORDERLINE_SCORE){
+            reasons.push("Übereinstimmung liegt nur knapp über der Annahmegrenze");
+        }
+
+        if(second&&best.score-second.score<8){
+            reasons.push("Ein weiterer Treffer ist fast genauso ähnlich");
+        }
+
+        best.reason=reasons.join("; ");
+    }else{
+        best.reason="Interpret, Titel und Version sind ausreichend eindeutig.";
+    }
+
     return best;
 }
 /* Ende der unveränderten Player-Suchlogik. */
@@ -496,14 +657,36 @@ async function checkAllPreviews(){
         const card={artist:String(row.Interpret||"").trim(),title:String(row.Titel||"").trim(),version:String(row.Version||"").trim()};
         try{
             const best=await checkPreviewWithRetry(card);
-            previewChecks[index]={status:"available",message:`${best.result.artist?.name||""} – ${best.result.title||""}`,score:best.score};
+            previewChecks[index]={
+                status:best.borderline?"borderline":"available",
+                reason:best.reason,
+                match:`${best.result.artist?.name||""} – ${best.result.title||""}`,
+                score:best.score
+            };
         }catch(error){
             const message=error?.message||"Unbekannter Prüfungsfehler.";
-            previewChecks[index]=message.includes("keinen Treffer mit Hörprobe")
-                ?{status:"unavailable",message}
-                :message.includes("kein ausreichend passender")
-                    ?{status:"nomatch",message}
-                    :{status:"technical",message};
+
+            if(message.includes("keinen Treffer mit Hörprobe")){
+                previewChecks[index]={
+                    status:"unavailable",
+                    reason:error.reason||message
+                };
+            }else if(message.includes("kein ausreichend passender")){
+                const best=error.best;
+
+                previewChecks[index]={
+                    status:"nomatch",
+                    reason:error.reason||message,
+                    match:best
+                        ?`${best.result.artist?.name||""} – ${best.result.title||""}`
+                        :""
+                };
+            }else{
+                previewChecks[index]={
+                    status:"technical",
+                    reason:message
+                };
+            }
         }
         updatePreviewCell(index);
         updateSummary();
@@ -523,7 +706,7 @@ async function checkAllPreviews(){
 
     previewCheckComplete=true;
     checkPreviewsButton.disabled=false;
-    const usable=previewChecks.filter(x=>x.status==="available").length;
+    const usable=previewChecks.filter(x=>x.status==="available"||x.status==="borderline").length;
     downloadQrButton.disabled=usable===0;
     statusText.textContent=`Prüfung abgeschlossen: ${usable} von ${data.length} Karten verwendbar.`;
 }
@@ -534,7 +717,7 @@ function downloadAllQrCodes(){
     const printCards=data.map((card,index)=>({
         card,check:previewChecks[index],
         canvas:table.querySelector(`canvas[data-card-index="${index}"]`)
-    })).filter(item=>item.check?.status==="available"&&item.canvas);
+    })).filter(item=>(item.check?.status==="available"||item.check?.status==="borderline")&&item.canvas);
 
     if(!printCards.length){statusText.textContent="Keine geprüften Karten mit Hörprobe vorhanden.";return}
 
@@ -557,6 +740,45 @@ function downloadAllQrCodes(){
         for(let c=0;c<=columns;c++){const x=marginLeft+c*cardWidth;pdf.line(x,marginTop-m,x,marginTop);pdf.line(x,marginTop+contentHeight,x,marginTop+contentHeight+m)}
         for(let r=0;r<=rows;r++){const y=marginTop+r*cardHeight;pdf.line(marginLeft-m,y,marginLeft,y);pdf.line(marginLeft+contentWidth,y,marginLeft+contentWidth+m,y)}
     }
+
+    function drawCardDecoration(pos,isBack){
+        const outer=2.2;
+        const inner=4.2;
+
+        pdf.setDrawColor(21,128,61);
+        pdf.setLineWidth(.55);
+        pdf.roundedRect(
+            pos.x+outer,
+            pos.y+outer,
+            cardWidth-outer*2,
+            cardHeight-outer*2,
+            2.2,
+            2.2
+        );
+
+        pdf.setDrawColor(180,200,184);
+        pdf.setLineWidth(.22);
+        pdf.roundedRect(
+            pos.x+inner,
+            pos.y+inner,
+            cardWidth-inner*2,
+            cardHeight-inner*2,
+            1.5,
+            1.5
+        );
+
+        pdf.setTextColor(21,128,61);
+        pdf.setFont("helvetica","bold");
+        pdf.setFontSize(7);
+        pdf.text(
+            isBack ? "♪" : "HH MUSIKQUIZ",
+            pos.x+cardWidth/2,
+            pos.y+6.5,
+            {align:"center"}
+        );
+        pdf.setTextColor(0,0,0);
+    }
+
     function addFooter(page,total,side){
         pdf.setFontSize(7);
         pdf.text(`HH Musikquiz – Version ${APP_VERSION} – ${side}`,10,pageHeight-5);
@@ -570,17 +792,18 @@ function downloadAllQrCodes(){
         const start=sheet*cardsPerSheet,end=Math.min(start+cardsPerSheet,printCards.length);
 
         for(let i=start;i<end;i++){
-            const item=printCards[i],card=item.card,pos=getCardPosition(i,false);
-            const qrSize=43,qrX=pos.x+(cardWidth-qrSize)/2,qrY=pos.y+(cardHeight-qrSize)/2-3;
+            const item=printCards[i],card=item.card,pos=getCardPosition(i,false);drawCardDecoration(pos,false);
+            const qrSize=43,qrX=pos.x+(cardWidth-qrSize)/2,qrY=pos.y+(cardHeight-qrSize)/2;
             pdf.addImage(item.canvas.toDataURL("image/png"),"PNG",qrX,qrY,qrSize,qrSize);
-            pdf.setFontSize(8);
+            pdf.setDrawColor(180,200,184);pdf.setLineWidth(.25);pdf.line(pos.x+10,pos.y+cardHeight-10,pos.x+cardWidth-10,pos.y+cardHeight-10);
+            pdf.setFont("helvetica","normal");pdf.setTextColor(0,0,0);pdf.setFontSize(8);
             pdf.text(String(card.ID||""),pos.x+cardWidth/2,pos.y+cardHeight-5,{align:"center"});
         }
         addFooter(currentPage,totalPages,"Vorderseiten");
 
         pdf.addPage();currentPage++;drawCutMarks();
         for(let i=start;i<end;i++){
-            const card=printCards[i].card,pos=getCardPosition(i,true),centerX=pos.x+cardWidth/2,textWidth=cardWidth-10;
+            const card=printCards[i].card,pos=getCardPosition(i,true),centerX=pos.x+cardWidth/2,textWidth=cardWidth-10;drawCardDecoration(pos,true);
             pdf.setFont("helvetica","bold");pdf.setFontSize(10);
             const filmLines=pdf.splitTextToSize(String(card.Film||""),textWidth);
             pdf.setFont("helvetica","normal");pdf.setFontSize(8);
@@ -593,11 +816,11 @@ function downloadAllQrCodes(){
             const hasVersion=Boolean(String(card.Version||"").trim());
             let y=pos.y+(cardHeight-(fh+ih+th+(hasVersion?vh:0)+yh+infoh+s*5))/2;
 
-            pdf.setFont("helvetica","bold");pdf.setFontSize(10);pdf.text(filmLines,centerX,y,{align:"center"});y+=fh+s;
+            pdf.setFont("helvetica","bold");pdf.setFontSize(11);pdf.text(filmLines,centerX,y,{align:"center"});y+=fh+s;
             pdf.setFont("helvetica","normal");pdf.setFontSize(8);pdf.text(interpretLines,centerX,y,{align:"center"});y+=ih+s;
             pdf.text(titleLines,centerX,y,{align:"center"});y+=th+s;
             if(hasVersion){pdf.text(versionLines,centerX,y,{align:"center"});y+=vh+s}
-            pdf.setFont("helvetica","bold");pdf.setFontSize(24);pdf.text(String(card.Jahr||""),centerX,y+7,{align:"center"});y+=yh+s;
+            pdf.setDrawColor(180,200,184);pdf.setLineWidth(.25);pdf.line(pos.x+12,y+1,pos.x+cardWidth-12,y+1);pdf.setFont("helvetica","bold");pdf.setFontSize(24);pdf.setTextColor(45,45,45);pdf.text(String(card.Jahr||""),centerX,y+9,{align:"center"});pdf.setTextColor(0,0,0);y+=yh+s;
             pdf.setFont("helvetica","normal");pdf.setFontSize(7);if(String(card.Info||"").trim())pdf.text(infoLines,centerX,y,{align:"center"});
             pdf.setFontSize(6);pdf.text(String(card.ID||""),centerX,pos.y+cardHeight-3,{align:"center"});
         }
