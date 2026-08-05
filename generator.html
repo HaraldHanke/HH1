@@ -234,7 +234,7 @@ details summary{
 <div class="metric"><b>Technischer Fehler</b><span id="technicalCount">0</span></div>
 <div class="metric"><b>Erfolgsquote</b><span id="successRate">0 %</span></div>
 </div>
-<small>Die Prüfung verwendet dieselbe Deezer-Suche und Trefferbewertung wie der Player. Hörprobenadressen werden nicht gespeichert.</small>
+<small>Zur Prüfung wird Deezer verwendet. Hörprobenadressen werden nicht gespeichert.</small>
 </div>
 
 <div class="box"><input id="search" type="text" placeholder="🔍 Film, Interpret oder Titel suchen..."></div>
@@ -277,7 +277,7 @@ details summary{
 <script>
 "use strict";
 
-const APP_VERSION = 24;
+const APP_VERSION = 25;
 const ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
 const SEARCH_LIMIT = 25;
 const REQUEST_TIMEOUT_MS = 15000;
@@ -415,12 +415,15 @@ async function showTable(rows){
                 catch(error){td.textContent="QR-Fehler";console.error(error)}
             }else if(column==="Hörprobe"){
                 td.dataset.previewIndex=String(rowIndex);
-                td.textContent=statusTextFor(previewChecks[rowIndex]);
-                td.className=statusClassFor(previewChecks[rowIndex]);
-            }else td.textContent=row[column]||"";
+            }else{
+                td.textContent=row[column]||"";
+            }
+
             tr.appendChild(td);
         }
+
         table.appendChild(tr);
+        updatePreviewCell(rowIndex);
     }
 }
 
