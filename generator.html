@@ -234,7 +234,7 @@ details summary{
 <div class="metric"><b>Technischer Fehler</b><span id="technicalCount">0</span></div>
 <div class="metric"><b>Erfolgsquote</b><span id="successRate">0 %</span></div>
 </div>
-<small>Zur Prüfung wird Deezer verwendet. Hörprobenadressen werden nicht gespeichert.</small>
+<small>Zur Prüfung wird Deezer verwendet.</small>
 </div>
 
 <div class="box"><input id="search" type="text" placeholder="🔍 Film, Interpret oder Titel suchen..."></div>
@@ -277,7 +277,7 @@ details summary{
 <script>
 "use strict";
 
-const APP_VERSION = 25;
+const APP_VERSION = 26;
 const ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
 const SEARCH_LIMIT = 25;
 const REQUEST_TIMEOUT_MS = 15000;
@@ -748,8 +748,8 @@ function downloadAllQrCodes(){
         const outer=2.2;
         const inner=4.2;
 
-        pdf.setDrawColor(21,128,61);
-        pdf.setLineWidth(.55);
+        pdf.setDrawColor(17,94,46);
+        pdf.setLineWidth(.62);
         pdf.roundedRect(
             pos.x+outer,
             pos.y+outer,
@@ -759,7 +759,7 @@ function downloadAllQrCodes(){
             2.2
         );
 
-        pdf.setDrawColor(180,200,184);
+        pdf.setDrawColor(160,184,166);
         pdf.setLineWidth(.22);
         pdf.roundedRect(
             pos.x+inner,
@@ -770,11 +770,38 @@ function downloadAllQrCodes(){
             1.5
         );
 
-        pdf.setTextColor(21,128,61);
+        pdf.setDrawColor(17,94,46);
+        pdf.setLineWidth(1.15);
+
+        pdf.line(
+            pos.x+outer+1.5,
+            pos.y+outer+1.5,
+            pos.x+outer+12,
+            pos.y+outer+1.5
+        );
+
+        pdf.line(
+            pos.x+cardWidth-outer-12,
+            pos.y+cardHeight-outer-1.5,
+            pos.x+cardWidth-outer-1.5,
+            pos.y+cardHeight-outer-1.5
+        );
+
+        pdf.setDrawColor(95,125,103);
+        pdf.setLineWidth(.35);
+
+        pdf.line(
+            pos.x+10,
+            pos.y+8.5,
+            pos.x+cardWidth-10,
+            pos.y+8.5
+        );
+
+        pdf.setTextColor(17,94,46);
         pdf.setFont("helvetica","bold");
         pdf.setFontSize(7);
         pdf.text(
-            isBack ? "♪" : "HH MUSIKQUIZ",
+            "HH MUSIKQUIZ",
             pos.x+cardWidth/2,
             pos.y+6.5,
             {align:"center"}
