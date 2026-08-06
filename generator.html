@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="de">
 <head>
 <meta charset="UTF-8">
@@ -277,7 +277,7 @@ details summary{
 <script>
 "use strict";
 
-const APP_VERSION = 26;
+const APP_VERSION = 27;
 const ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
 const SEARCH_LIMIT = 25;
 const REQUEST_TIMEOUT_MS = 15000;
@@ -715,150 +715,521 @@ async function checkAllPreviews(){
 }
 
 function downloadAllQrCodes(){
-    if(!previewCheckComplete){statusText.textContent="Bitte zuerst alle Deezer-Hörproben online prüfen.";return}
-    const {jsPDF}=window.jspdf;
-    const printCards=data.map((card,index)=>({
-        card,check:previewChecks[index],
-        canvas:table.querySelector(`canvas[data-card-index="${index}"]`)
-    })).filter(item=>(item.check?.status==="available"||item.check?.status==="borderline")&&item.canvas);
+    if(!previewCheckComplete){
+        statusText.textContent="Bitte zuerst alle Deezer-Hörproben online prüfen.";
+        return;
+    }
 
-    if(!printCards.length){statusText.textContent="Keine geprüften Karten mit Hörprobe vorhanden.";return}
+    const {jsPDF}=window.jspdf;
+
+    const printCards=data.map((card,index)=>({
+        card,
+        check:previewChecks[index],
+        canvas:table.querySelector(`canvas[data-card-index="${index}"]`)
+    })).filter(item=>
+        (item.check?.status==="available"||item.check?.status==="borderline")&&
+        item.canvas
+    );
+
+    if(!printCards.length){
+        statusText.textContent="Keine geprüften Karten mit Hörprobe vorhanden.";
+        return;
+    }
 
     const duplexMode=$("duplexMode").value;
-    const pdf=new jsPDF({orientation:"portrait",unit:"mm",format:"a4"});
-    const pageWidth=210,pageHeight=297,columns=3,rows=4,cardsPerSheet=12;
-    const marginLeft=9,marginTop=12,cardWidth=64,cardHeight=66;
-    const contentWidth=columns*cardWidth,contentHeight=rows*cardHeight;
+    const pdf=new jsPDF({
+        orientation:"portrait",
+        unit:"mm",
+        format:"a4"
+    });
+
+    const pageWidth=210;
+    const pageHeight=297;
+    const columns=3;
+    const rows=4;
+    const cardsPerSheet=12;
+
+    const marginLeft=9;
+    const marginTop=12;
+    const cardWidth=64;
+    const cardHeight=66;
+
+    const contentWidth=columns*cardWidth;
+    const contentHeight=rows*cardHeight;
     const sheetCount=Math.ceil(printCards.length/cardsPerSheet);
+
+    const COLORS={
+        cyan:[0,151,201],
+        blue:[19,66,142],
+        navy:[15,31,78],
+        green:[30,126,67],
+        orange:[245,158,11],
+        red:[239,68,68],
+        magenta:[218,24,139],
+        purple:[112,45,145],
+        gray:[75,75,75],
+        light:[200,210,205]
+    };
+
+    function setDraw(rgb){
+        pdf.setDrawColor(rgb[0],rgb[1],rgb[2]);
+    }
+
+    function setFill(rgb){
+        pdf.setFillColor(rgb[0],rgb[1],rgb[2]);
+    }
+
+    function setText(rgb){
+        pdf.setTextColor(rgb[0],rgb[1],rgb[2]);
+    }
 
     function getCardPosition(index,isBack){
         const position=index%cardsPerSheet;
-        let column=position%columns,row=Math.floor(position/columns);
-        if(isBack&&duplexMode==="long")column=columns-1-column;
-        if(isBack&&duplexMode==="short")row=rows-1-row;
-        return{x:marginLeft+column*cardWidth,y:marginTop+row*cardHeight};
+        let column=position%columns;
+        let row=Math.floor(position/columns);
+
+        if(isBack&&duplexMode==="long"){
+            column=columns-1-column;
+        }
+
+        if(isBack&&duplexMode==="short"){
+            row=rows-1-row;
+        }
+
+        return{
+            x:marginLeft+column*cardWidth,
+            y:marginTop+row*cardHeight
+        };
     }
+
     function drawCutMarks(){
-        pdf.setDrawColor(0);pdf.setLineWidth(.15);const m=3;
-        for(let c=0;c<=columns;c++){const x=marginLeft+c*cardWidth;pdf.line(x,marginTop-m,x,marginTop);pdf.line(x,marginTop+contentHeight,x,marginTop+contentHeight+m)}
-        for(let r=0;r<=rows;r++){const y=marginTop+r*cardHeight;pdf.line(marginLeft-m,y,marginLeft,y);pdf.line(marginLeft+contentWidth,y,marginLeft+contentWidth+m,y)}
+        pdf.setDrawColor(0);
+        pdf.setLineWidth(.15);
+        const mark=3;
+
+        for(let column=0;column<=columns;column++){
+            const x=marginLeft+column*cardWidth;
+            pdf.line(x,marginTop-mark,x,marginTop);
+            pdf.line(
+                x,
+                marginTop+contentHeight,
+                x,
+                marginTop+contentHeight+mark
+            );
+        }
+
+        for(let row=0;row<=rows;row++){
+            const y=marginTop+row*cardHeight;
+            pdf.line(marginLeft-mark,y,marginLeft,y);
+            pdf.line(
+                marginLeft+contentWidth,
+                y,
+                marginLeft+contentWidth+mark,
+                y
+            );
+        }
     }
 
-    function drawCardDecoration(pos,isBack){
-        const outer=2.2;
-        const inner=4.2;
+    function drawColorBorder(pos){
+        const inset=1.7;
+        const left=pos.x+inset;
+        const right=pos.x+cardWidth-inset;
+        const top=pos.y+inset;
+        const bottom=pos.y+cardHeight-inset;
+        const radius=2.3;
 
-        pdf.setDrawColor(17,94,46);
-        pdf.setLineWidth(.62);
+        pdf.setLineWidth(.7);
+
+        setDraw(COLORS.cyan);
+        pdf.line(left+radius,top,pos.x+cardWidth*.48,top);
+        pdf.line(left,top+radius,left,pos.y+cardHeight*.48);
+
+        setDraw(COLORS.magenta);
+        pdf.line(pos.x+cardWidth*.48,top,right-radius,top);
+        pdf.line(right,top+radius,right,pos.y+cardHeight*.48);
+
+        setDraw(COLORS.orange);
+        pdf.line(left,pos.y+cardHeight*.48,left,bottom-radius);
+        pdf.line(left+radius,bottom,pos.x+cardWidth*.48,bottom);
+
+        setDraw(COLORS.red);
+        pdf.line(right,pos.y+cardHeight*.48,right,bottom-radius);
+        pdf.line(pos.x+cardWidth*.48,bottom,right-radius,bottom);
+
+        setDraw(COLORS.purple);
+        pdf.setLineWidth(.25);
         pdf.roundedRect(
-            pos.x+outer,
-            pos.y+outer,
-            cardWidth-outer*2,
-            cardHeight-outer*2,
-            2.2,
-            2.2
+            pos.x+3.2,
+            pos.y+3.2,
+            cardWidth-6.4,
+            cardHeight-6.4,
+            radius,
+            radius
         );
+    }
 
-        pdf.setDrawColor(160,184,166);
-        pdf.setLineWidth(.22);
+    function drawWaveform(centerX,y,width,height){
+        const heights=[
+            .35,.58,.82,.52,.38,.68,.96,.55,.43,.76,
+            .50,.88,.60,.40,.72,.98,.63,.42,.69,.86,
+            .54,.36,.66,.82,.50
+        ];
+
+        const colors=[
+            COLORS.cyan,COLORS.blue,COLORS.cyan,COLORS.green,
+            COLORS.green,COLORS.orange,COLORS.orange,COLORS.red,
+            COLORS.red,COLORS.magenta,COLORS.magenta,COLORS.purple
+        ];
+
+        const gap=width/(heights.length-1);
+
+        pdf.setLineCap("round");
+        pdf.setLineWidth(.8);
+
+        heights.forEach((factor,index)=>{
+            const x=centerX-width/2+index*gap;
+            const barHeight=height*factor;
+            setDraw(colors[index%colors.length]);
+            pdf.line(
+                x,
+                y+(height-barHeight)/2,
+                x,
+                y+(height+barHeight)/2
+            );
+        });
+
+        pdf.setLineCap("butt");
+    }
+
+    function drawHeadphones(pos,centerX,centerY,scale){
+        const rx=22*scale;
+        const ry=19*scale;
+
+        setDraw(COLORS.navy);
+        pdf.setLineWidth(2.4*scale);
+        pdf.ellipse(centerX,centerY,rx,ry,"S");
+
+        setDraw(COLORS.cyan);
+        pdf.setLineWidth(.7*scale);
+        pdf.ellipse(centerX-.8*scale,centerY-.4*scale,rx,ry,"S");
+
+        const earWidth=8*scale;
+        const earHeight=20*scale;
+        const earY=centerY+2*scale;
+
+        setFill(COLORS.cyan);
+        setDraw(COLORS.blue);
+        pdf.setLineWidth(.45);
         pdf.roundedRect(
-            pos.x+inner,
-            pos.y+inner,
-            cardWidth-inner*2,
-            cardHeight-inner*2,
-            1.5,
-            1.5
+            centerX-rx-2.5*scale,
+            earY,
+            earWidth,
+            earHeight,
+            2.2*scale,
+            2.2*scale,
+            "FD"
         );
 
-        pdf.setDrawColor(17,94,46);
-        pdf.setLineWidth(1.15);
-
-        pdf.line(
-            pos.x+outer+1.5,
-            pos.y+outer+1.5,
-            pos.x+outer+12,
-            pos.y+outer+1.5
+        setFill(COLORS.magenta);
+        setDraw(COLORS.purple);
+        pdf.roundedRect(
+            centerX+rx-earWidth+2.5*scale,
+            earY,
+            earWidth,
+            earHeight,
+            2.2*scale,
+            2.2*scale,
+            "FD"
         );
 
-        pdf.line(
-            pos.x+cardWidth-outer-12,
-            pos.y+cardHeight-outer-1.5,
-            pos.x+cardWidth-outer-1.5,
-            pos.y+cardHeight-outer-1.5
+        setFill(COLORS.navy);
+        pdf.roundedRect(
+            centerX-rx+3.2*scale,
+            earY+1.2*scale,
+            3.5*scale,
+            earHeight-2.4*scale,
+            1.2*scale,
+            1.2*scale,
+            "F"
         );
 
-        pdf.setDrawColor(95,125,103);
-        pdf.setLineWidth(.35);
-
-        pdf.line(
-            pos.x+10,
-            pos.y+8.5,
-            pos.x+cardWidth-10,
-            pos.y+8.5
+        pdf.roundedRect(
+            centerX+rx-6.7*scale,
+            earY+1.2*scale,
+            3.5*scale,
+            earHeight-2.4*scale,
+            1.2*scale,
+            1.2*scale,
+            "F"
         );
+    }
 
-        pdf.setTextColor(17,94,46);
+    function drawIdPill(pos,id){
+        const pillWidth=42;
+        const pillHeight=6.4;
+        const x=pos.x+(cardWidth-pillWidth)/2;
+        const y=pos.y+cardHeight-9;
+
+        setDraw(COLORS.cyan);
+        pdf.setLineWidth(.55);
+        pdf.roundedRect(x,y,pillWidth,pillHeight,3,3,"S");
+
+        setDraw(COLORS.magenta);
+        pdf.line(x+pillWidth*.56,y,x+pillWidth-3,y);
+        pdf.line(x+pillWidth-1,y+2,x+pillWidth-1,y+pillHeight-2);
+
+        setText(COLORS.navy);
         pdf.setFont("helvetica","bold");
-        pdf.setFontSize(7);
+        pdf.setFontSize(7.5);
         pdf.text(
-            "HH MUSIKQUIZ",
-            pos.x+cardWidth/2,
-            pos.y+6.5,
+            String(id||""),
+            x+pillWidth/2,
+            y+4.35,
+            {align:"center"}
+        );
+
+        pdf.setTextColor(0,0,0);
+    }
+
+    function drawFrontCard(pos,item){
+        drawColorBorder(pos);
+
+        const centerX=pos.x+cardWidth/2;
+
+        drawWaveform(
+            centerX,
+            pos.y+8.5,
+            31,
+            5.5
+        );
+
+        drawHeadphones(
+            pos,
+            centerX,
+            pos.y+29,
+            .92
+        );
+
+        const qrSize=34;
+        const qrX=centerX-qrSize/2;
+        const qrY=pos.y+18;
+
+        setFill([255,255,255]);
+        pdf.roundedRect(
+            qrX-1.3,
+            qrY-1.3,
+            qrSize+2.6,
+            qrSize+2.6,
+            1.6,
+            1.6,
+            "F"
+        );
+
+        pdf.addImage(
+            item.canvas.toDataURL("image/png"),
+            "PNG",
+            qrX,
+            qrY,
+            qrSize,
+            qrSize
+        );
+
+        drawIdPill(pos,item.card.ID);
+    }
+
+    function drawLabelRow(pos,label,value,y,options={}){
+        const labelX=pos.x+8;
+        const dividerX=pos.x+22.5;
+        const valueX=pos.x+25;
+        const valueWidth=cardWidth-30;
+        const fontSize=options.fontSize??7;
+        const lineHeight=options.lineHeight??2.8;
+        const maxLines=options.maxLines??1;
+
+        setText(COLORS.green);
+        pdf.setFont("helvetica","bold");
+        pdf.setFontSize(6.2);
+        pdf.text(label,labelX,y);
+
+        setDraw(COLORS.green);
+        pdf.setLineWidth(.35);
+        pdf.line(dividerX,y-2.5,dividerX,y+1.2);
+
+        pdf.setTextColor(0,0,0);
+        pdf.setFont(
+            "helvetica",
+            options.bold?"bold":"normal"
+        );
+        pdf.setFontSize(fontSize);
+
+        const lines=pdf
+            .splitTextToSize(String(value||""),valueWidth)
+            .slice(0,maxLines);
+
+        pdf.text(lines,valueX,y);
+
+        setDraw([160,185,168]);
+        pdf.setLineWidth(.2);
+        const ruleY=y+(lines.length-1)*lineHeight+1.7;
+        pdf.line(
+            pos.x+8,
+            ruleY,
+            pos.x+cardWidth-8,
+            ruleY
+        );
+
+        return ruleY+3.3;
+    }
+
+    function drawBackCard(pos,card){
+        drawColorBorder(pos);
+
+        const centerX=pos.x+cardWidth/2;
+
+        drawWaveform(
+            centerX,
+            pos.y+6.8,
+            29,
+            4.4
+        );
+
+        drawHeadphones(
+            pos,
+            centerX,
+            pos.y+18.5,
+            .57
+        );
+
+        pdf.setTextColor(45,45,45);
+        pdf.setFont("helvetica","bold");
+        pdf.setFontSize(23);
+        pdf.text(
+            String(card.Jahr||""),
+            centerX,
+            pos.y+24.7,
             {align:"center"}
         );
         pdf.setTextColor(0,0,0);
+
+        let y=pos.y+31.5;
+
+        y=drawLabelRow(
+            pos,
+            "FILM",
+            card.Film,
+            y,
+            {fontSize:7.8,bold:true,maxLines:1}
+        );
+
+        y=drawLabelRow(
+            pos,
+            "INTERPRET",
+            card.Interpret,
+            y,
+            {fontSize:7,maxLines:1}
+        );
+
+        y=drawLabelRow(
+            pos,
+            "TITEL",
+            card.Titel,
+            y,
+            {fontSize:7.2,bold:true,maxLines:1}
+        );
+
+        if(String(card.Version||"").trim()){
+            y=drawLabelRow(
+                pos,
+                "VERSION",
+                card.Version,
+                y,
+                {fontSize:6.8,maxLines:1}
+            );
+        }
+
+        const remainingHeight=pos.y+56-y;
+        const infoLines=Math.max(
+            1,
+            Math.min(2,Math.floor(remainingHeight/2.8))
+        );
+
+        drawLabelRow(
+            pos,
+            "INFO",
+            card.Info,
+            y,
+            {fontSize:6.1,lineHeight:2.5,maxLines:infoLines}
+        );
+
+        drawIdPill(pos,card.ID);
     }
 
     function addFooter(page,total,side){
         pdf.setFontSize(7);
-        pdf.text(`HH Musikquiz – Version ${APP_VERSION} – ${side}`,10,pageHeight-5);
-        pdf.text(`Seite ${page}/${total}`,pageWidth-10,pageHeight-5,{align:"right"});
+        pdf.setTextColor(0,0,0);
+        pdf.text(
+            `HH Musikquiz – Version ${APP_VERSION} – ${side}`,
+            10,
+            pageHeight-5
+        );
+        pdf.text(
+            `Seite ${page}/${total}`,
+            pageWidth-10,
+            pageHeight-5,
+            {align:"right"}
+        );
     }
 
-    const totalPages=sheetCount*2;let currentPage=0;
+    const totalPages=sheetCount*2;
+    let currentPage=0;
+
     for(let sheet=0;sheet<sheetCount;sheet++){
-        if(currentPage>0)pdf.addPage();
-        currentPage++;drawCutMarks();
-        const start=sheet*cardsPerSheet,end=Math.min(start+cardsPerSheet,printCards.length);
-
-        for(let i=start;i<end;i++){
-            const item=printCards[i],card=item.card,pos=getCardPosition(i,false);drawCardDecoration(pos,false);
-            const qrSize=43,qrX=pos.x+(cardWidth-qrSize)/2,qrY=pos.y+(cardHeight-qrSize)/2;
-            pdf.addImage(item.canvas.toDataURL("image/png"),"PNG",qrX,qrY,qrSize,qrSize);
-            pdf.setDrawColor(180,200,184);pdf.setLineWidth(.25);pdf.line(pos.x+10,pos.y+cardHeight-10,pos.x+cardWidth-10,pos.y+cardHeight-10);
-            pdf.setFont("helvetica","normal");pdf.setTextColor(0,0,0);pdf.setFontSize(8);
-            pdf.text(String(card.ID||""),pos.x+cardWidth/2,pos.y+cardHeight-5,{align:"center"});
+        if(currentPage>0){
+            pdf.addPage();
         }
-        addFooter(currentPage,totalPages,"Vorderseiten");
 
-        pdf.addPage();currentPage++;drawCutMarks();
-        for(let i=start;i<end;i++){
-            const card=printCards[i].card,pos=getCardPosition(i,true),centerX=pos.x+cardWidth/2,textWidth=cardWidth-10;drawCardDecoration(pos,true);
-            pdf.setFont("helvetica","bold");pdf.setFontSize(10);
-            const filmLines=pdf.splitTextToSize(String(card.Film||""),textWidth);
-            pdf.setFont("helvetica","normal");pdf.setFontSize(8);
-            const interpretLines=pdf.splitTextToSize(String(card.Interpret||""),textWidth);
-            const titleLines=pdf.splitTextToSize(String(card.Titel||""),textWidth);
-            const versionLines=pdf.splitTextToSize(String(card.Version||""),textWidth);
-            pdf.setFontSize(7);
-            const infoLines=pdf.splitTextToSize(String(card.Info||""),textWidth);
-            const fh=filmLines.length*4.2,ih=interpretLines.length*3.2,th=titleLines.length*3.2,vh=versionLines.length*3.2,yh=9,infoh=infoLines.length*2.8,s=2;
-            const hasVersion=Boolean(String(card.Version||"").trim());
-            let y=pos.y+(cardHeight-(fh+ih+th+(hasVersion?vh:0)+yh+infoh+s*5))/2;
+        currentPage++;
+        drawCutMarks();
 
-            pdf.setFont("helvetica","bold");pdf.setFontSize(11);pdf.text(filmLines,centerX,y,{align:"center"});y+=fh+s;
-            pdf.setFont("helvetica","normal");pdf.setFontSize(8);pdf.text(interpretLines,centerX,y,{align:"center"});y+=ih+s;
-            pdf.text(titleLines,centerX,y,{align:"center"});y+=th+s;
-            if(hasVersion){pdf.text(versionLines,centerX,y,{align:"center"});y+=vh+s}
-            pdf.setDrawColor(180,200,184);pdf.setLineWidth(.25);pdf.line(pos.x+12,y+1,pos.x+cardWidth-12,y+1);pdf.setFont("helvetica","bold");pdf.setFontSize(24);pdf.setTextColor(45,45,45);pdf.text(String(card.Jahr||""),centerX,y+9,{align:"center"});pdf.setTextColor(0,0,0);y+=yh+s;
-            pdf.setFont("helvetica","normal");pdf.setFontSize(7);if(String(card.Info||"").trim())pdf.text(infoLines,centerX,y,{align:"center"});
-            pdf.setFontSize(6);pdf.text(String(card.ID||""),centerX,pos.y+cardHeight-3,{align:"center"});
+        const start=sheet*cardsPerSheet;
+        const end=Math.min(
+            start+cardsPerSheet,
+            printCards.length
+        );
+
+        for(let index=start;index<end;index++){
+            const item=printCards[index];
+            const pos=getCardPosition(index,false);
+            drawFrontCard(pos,item);
         }
-        addFooter(currentPage,totalPages,"Rückseiten");
+
+        addFooter(
+            currentPage,
+            totalPages,
+            "Vorderseiten"
+        );
+
+        pdf.addPage();
+        currentPage++;
+        drawCutMarks();
+
+        for(let index=start;index<end;index++){
+            const card=printCards[index].card;
+            const pos=getCardPosition(index,true);
+            drawBackCard(pos,card);
+        }
+
+        addFooter(
+            currentPage,
+            totalPages,
+            "Rückseiten"
+        );
     }
 
     pdf.save("HH-Musikquiz-Duplex-Karten.pdf");
-    statusText.textContent=`PDF mit ${printCards.length} geprüften Karten und ${totalPages} Seiten wurde erstellt.`;
+
+    statusText.textContent=
+        `PDF mit ${printCards.length} geprüften Karten und ${totalPages} Seiten wurde erstellt.`;
 }
 
 csvInput.addEventListener("change",()=>{
