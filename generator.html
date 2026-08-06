@@ -246,7 +246,21 @@ details summary{
 <option value="long">Lange Kante wenden</option>
 <option value="short">Kurze Kante wenden</option>
 </select>
-<button id="downloadQr" type="button" disabled>Duplex-PDF mit geprüften Karten erstellen</button>
+<button id="downloadQr" type="button" disabled>
+Duplex-PDF mit geprüften Karten erstellen
+</button>
+
+<div style="height:10px"></div>
+
+<button id="downloadFronts" type="button" disabled>
+PDF nur mit Vorderseiten erstellen
+</button>
+
+<div style="height:10px"></div>
+
+<button id="downloadBacks" type="button" disabled>
+PDF nur mit Rückseiten erstellen
+</button>
 </div>
 
 <div class="box">
@@ -277,7 +291,7 @@ details summary{
 <script>
 "use strict";
 
-const APP_VERSION = 33;
+const APP_VERSION = 34;
 const ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
 const SEARCH_LIMIT = 25;
 const REQUEST_TIMEOUT_MS = 15000;
@@ -292,7 +306,7 @@ const RETRY_BASE_MS = 2000;
 const $ = id => document.getElementById(id);
 const csvInput=$("csv"),fileName=$("file"),statusText=$("status"),cardsCount=$("cards"),
 missingCount=$("missing"),errorsCount=$("errors"),table=$("tbl"),searchInput=$("search"),
-downloadQrButton=$("downloadQr"),checkPreviewsButton=$("checkPreviews");
+downloadQrButton=$("downloadQr"),downloadFrontsButton=$("downloadFronts"),downloadBacksButton=$("downloadBacks"),checkPreviewsButton=$("checkPreviews");
 const checkedCount=$("checkedCount"),availableCount=$("availableCount"),
 unavailableCount=$("unavailableCount"),noMatchCount=$("noMatchCount"),
 technicalCount=$("technicalCount"),successRate=$("successRate");
@@ -329,6 +343,8 @@ function resetPreviewCheck(){
     noMatchCount.textContent=technicalCount.textContent="0";
     successRate.textContent="0 %";
     downloadQrButton.disabled=true;
+    downloadFrontsButton.disabled=true;
+    downloadBacksButton.disabled=true;
     checkPreviewsButton.disabled=data.length===0;
 }
 
@@ -650,6 +666,8 @@ async function checkAllPreviews(){
     if(!data.length)return;
     checkPreviewsButton.disabled=true;
     downloadQrButton.disabled=true;
+    downloadFrontsButton.disabled=true;
+    downloadBacksButton.disabled=true;
     previewCheckComplete=false;
     statusText.textContent=`Deezer-Prüfung gestartet: 0 von ${data.length} Karten.`;
 
@@ -710,11 +728,14 @@ async function checkAllPreviews(){
     previewCheckComplete=true;
     checkPreviewsButton.disabled=false;
     const usable=previewChecks.filter(x=>x.status==="available"||x.status==="borderline").length;
-    downloadQrButton.disabled=usable===0;
+    const pdfDisabled=usable===0;
+    downloadQrButton.disabled=pdfDisabled;
+    downloadFrontsButton.disabled=pdfDisabled;
+    downloadBacksButton.disabled=pdfDisabled;
     statusText.textContent=`Prüfung abgeschlossen: ${usable} von ${data.length} Karten verwendbar.`;
 }
 
-function downloadAllQrCodes(){
+function downloadAllQrCodes(mode="duplex"){
     if(!previewCheckComplete){
         statusText.textContent="Bitte zuerst alle Deezer-Hörproben online prüfen.";
         return;
@@ -1210,56 +1231,88 @@ function downloadAllQrCodes(){
         );
     }
 
-    const totalPages=sheetCount*2;
+    const totalPages =
+        mode === "duplex"
+            ? sheetCount * 2
+            : sheetCount;
+
     let currentPage=0;
 
-    for(let sheet=0;sheet<sheetCount;sheet++){
+    function beginPage(){
         if(currentPage>0){
             pdf.addPage();
         }
 
         currentPage++;
         drawCutMarks();
+    }
 
+    for(let sheet=0;sheet<sheetCount;sheet++){
         const start=sheet*cardsPerSheet;
         const end=Math.min(
             start+cardsPerSheet,
             printCards.length
         );
 
-        for(let index=start;index<end;index++){
-            const item=printCards[index];
-            const pos=getCardPosition(index,false);
-            drawFrontCard(pos,item);
+        if(mode==="duplex"||mode==="fronts"){
+            beginPage();
+
+            for(let index=start;index<end;index++){
+                const item=printCards[index];
+                const pos=getCardPosition(index,false);
+                drawFrontCard(pos,item);
+            }
+
+            addFooter(
+                currentPage,
+                totalPages,
+                "Vorderseiten"
+            );
         }
 
-        addFooter(
-            currentPage,
-            totalPages,
-            "Vorderseiten"
-        );
+        if(mode==="duplex"||mode==="backs"){
+            beginPage();
 
-        pdf.addPage();
-        currentPage++;
-        drawCutMarks();
+            for(let index=start;index<end;index++){
+                const card=printCards[index].card;
 
-        for(let index=start;index<end;index++){
-            const card=printCards[index].card;
-            const pos=getCardPosition(index,true);
-            drawBackCard(pos,card);
+                /*
+                 * Bei einer getrennten Rückseiten-Datei wird dieselbe
+                 * Spiegelung wie beim gewählten Duplexmodus verwendet.
+                 * So können Vorder- und Rückseiten manuell deckungsgleich
+                 * gedruckt werden.
+                 */
+                const pos=getCardPosition(index,true);
+                drawBackCard(pos,card);
+            }
+
+            addFooter(
+                currentPage,
+                totalPages,
+                "Rückseiten"
+            );
         }
-
-        addFooter(
-            currentPage,
-            totalPages,
-            "Rückseiten"
-        );
     }
 
-    pdf.save("HH-Musikquiz-Duplex-Karten.pdf");
+    const outputName =
+        mode==="fronts"
+            ? "HH-Musikquiz-Vorderseiten.pdf"
+            : mode==="backs"
+                ? "HH-Musikquiz-Rueckseiten.pdf"
+                : "HH-Musikquiz-Duplex-Karten.pdf";
+
+    pdf.save(outputName);
+
+    const outputLabel =
+        mode==="fronts"
+            ? "Vorderseiten-PDF"
+            : mode==="backs"
+                ? "Rückseiten-PDF"
+                : "Duplex-PDF";
 
     statusText.textContent=
-        `PDF mit ${printCards.length} geprüften Karten und ${totalPages} Seiten wurde erstellt.`;
+        `${outputLabel} mit ${printCards.length} geprüften Karten und ${totalPages} Seiten wurde erstellt.`;
+
 }
 
 csvInput.addEventListener("change",()=>{
@@ -1306,7 +1359,20 @@ searchInput.addEventListener("input",()=>{
     for(let i=1;i<rows.length;i++)rows[i].style.display=rows[i].innerText.toLowerCase().includes(term)?"":"none";
 });
 checkPreviewsButton.addEventListener("click",checkAllPreviews);
-downloadQrButton.addEventListener("click",downloadAllQrCodes);
+downloadQrButton.addEventListener(
+    "click",
+    ()=>downloadAllQrCodes("duplex")
+);
+
+downloadFrontsButton.addEventListener(
+    "click",
+    ()=>downloadAllQrCodes("fronts")
+);
+
+downloadBacksButton.addEventListener(
+    "click",
+    ()=>downloadAllQrCodes("backs")
+);
 </script>
 </body>
 </html>
