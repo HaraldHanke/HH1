@@ -164,10 +164,19 @@
     }
 
     #torchButton {
-      color: #5a4300;
-      background: #fff3a6;
-      border: 1px solid #f2d34f;
+      color: #30364a;
+      background: #f1f3fb;
+      border: 1px solid var(--border);
       font-size: 24px;
+    }
+
+    #torchButton.torch-on {
+      color: #6b4f00;
+      background: #ffe36e;
+      border-color: #f1c232;
+      box-shadow:
+        0 0 0 3px rgba(255, 227, 110, 0.35),
+        0 0 18px rgba(255, 193, 7, 0.55);
     }
 
     #cameraChoiceButton {
@@ -726,7 +735,7 @@
   <script>
     "use strict";
 
-    const PLAYER_VERSION = 19;
+    const PLAYER_VERSION = 20;
     const QR_FORMAT_VERSION = 1;
     const SEARCH_LIMIT = 25;
     const REQUEST_TIMEOUT_MS = 15000;
@@ -1284,10 +1293,12 @@
           advanced: [{ torch: torchEnabled }]
         });
 
-        torchButton.innerHTML = torchEnabled ? "&#128161;" : "&#128161;";
+        torchButton.innerHTML = "&#128161;";
+        torchButton.classList.toggle("torch-on", torchEnabled);
       } catch {
         torchEnabled = false;
         torchButton.innerHTML = "&#128161;";
+        torchButton.classList.remove("torch-on");
         torchButton.disabled = true;
 
         setStatus(
@@ -1302,6 +1313,7 @@
       torchEnabled = false;
       torchButton.disabled = true;
       torchButton.innerHTML = "&#128161;";
+      torchButton.classList.remove("torch-on");
     }
 
     async function stopScanner() {
