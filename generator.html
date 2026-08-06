@@ -277,7 +277,7 @@ details summary{
 <script>
 "use strict";
 
-const APP_VERSION = 28;
+const APP_VERSION = 29;
 const ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
 const SEARCH_LIMIT = 25;
 const REQUEST_TIMEOUT_MS = 15000;
@@ -902,65 +902,76 @@ function downloadAllQrCodes(){
     }
 
     function drawHeadphones(pos,centerX,topY,scale){
-        const halfWidth=22*scale;
-        const archHeight=17*scale;
+        const archHalf=24*scale;
+        const archHeight=15*scale;
         const cupTop=topY+archHeight-1.2*scale;
-        const cupWidth=7.2*scale;
-        const cupHeight=16.5*scale;
 
-        const leftX=centerX-halfWidth;
-        const rightX=centerX+halfWidth;
+        const leftCupX=centerX-archHalf-4.8*scale;
+        const rightCupX=centerX+archHalf-2.2*scale;
+
+        const cupOuterW=5.6*scale;
+        const cupOuterH=14.5*scale;
+        const cupInnerW=3.3*scale;
+        const cupInnerH=11.8*scale;
 
         /*
-         * Offener Kopfhörerbügel aus zwei Bézierkurven.
-         * Dadurch entsteht kein vollständiger Kreis mehr.
+         * Klassischer Kopfhörerbügel als geschlossene, gut erkennbare Halbkurve.
          */
         setDraw(COLORS.navy);
-        pdf.setLineWidth(2.35*scale);
+        pdf.setLineWidth(1.9*scale);
         pdf.lines(
             [
                 [
-                    halfWidth*.18,
-                    -archHeight*.92,
-                    halfWidth*.72,
-                    -archHeight*.92,
-                    halfWidth,
-                    0
-                ],
-                [
-                    halfWidth*.28,
-                    archHeight*.92,
-                    halfWidth*.82,
-                    archHeight*.92,
-                    halfWidth,
+                    archHalf*0.22,
+                    -archHeight*0.95,
+                    archHalf*0.78,
+                    -archHeight*0.95,
+                    archHalf,
                     0
                 ]
             ],
-            leftX,
-            cupTop,
+            centerX-archHalf,
+            topY+archHeight,
+            [1,1],
+            "S",
+            false
+        );
+        pdf.lines(
+            [
+                [
+                    archHalf*0.22,
+                    archHeight*0.95,
+                    archHalf*0.78,
+                    archHeight*0.95,
+                    archHalf,
+                    0
+                ]
+            ],
+            centerX,
+            topY,
             [1,1],
             "S",
             false
         );
 
         /*
-         * Farbiger äußerer Akzent auf dem Bügel.
+         * Farbiger Akzent auf dem äußeren Bügel.
          */
         setDraw(COLORS.cyan);
-        pdf.setLineWidth(.65*scale);
+        pdf.setLineWidth(0.55*scale);
         pdf.lines(
             [
                 [
-                    halfWidth*.18,
-                    -archHeight*.92,
-                    halfWidth*.72,
-                    -archHeight*.92,
-                    halfWidth,
+                    archHalf*0.22,
+                    -archHeight*0.95,
+                    archHalf*0.78,
+                    -archHeight*0.95,
+                    archHalf,
                     0
                 ]
             ],
-            leftX-.45*scale,
-            cupTop-.35*scale,
+            centerX-archHalf-0.35*scale,
+            topY+archHeight-0.25*scale,
             [1,1],
             "S",
             false
@@ -970,67 +981,74 @@ function downloadAllQrCodes(){
         pdf.lines(
             [
                 [
-                    halfWidth*.28,
-                    archHeight*.92,
-                    halfWidth*.82,
-                    archHeight*.92,
-                    halfWidth,
+                    archHalf*0.22,
+                    archHeight*0.95,
+                    archHalf*0.78,
+                    archHeight*0.95,
+                    archHalf,
                     0
                 ]
             ],
-            centerX-.05*scale,
-            topY+.2*scale,
+            centerX+0.15*scale,
+            topY+0.15*scale,
             [1,1],
             "S",
             false
         );
 
         /*
-         * Ohrmuscheln liegen seitlich außerhalb des Inhaltsbereichs.
+         * Verbindung vom Bügel zu den Ohrmuscheln.
+         */
+        setDraw(COLORS.navy);
+        pdf.setLineWidth(1.25*scale);
+        pdf.line(centerX-archHalf+1.1*scale, cupTop+1.2*scale, leftCupX+cupOuterW-0.6*scale, cupTop+1.8*scale);
+        pdf.line(centerX+archHalf-1.1*scale, cupTop+1.2*scale, rightCupX+0.6*scale, cupTop+1.8*scale);
+
+        /*
+         * Ohrmuscheln.
          */
         setFill(COLORS.cyan);
         setDraw(COLORS.blue);
-        pdf.setLineWidth(.45);
+        pdf.setLineWidth(0.35);
         pdf.roundedRect(
-            leftX-2.6*scale,
+            leftCupX,
             cupTop,
-            cupWidth,
-            cupHeight,
-            2*scale,
-            2*scale,
+            cupOuterW,
+            cupOuterH,
+            1.7*scale,
+            1.7*scale,
             "FD"
         );
 
         setFill(COLORS.magenta);
         setDraw(COLORS.purple);
         pdf.roundedRect(
-            rightX-cupWidth+2.6*scale,
+            rightCupX,
             cupTop,
-            cupWidth,
-            cupHeight,
-            2*scale,
-            2*scale,
+            cupOuterW,
+            cupOuterH,
+            1.7*scale,
+            1.7*scale,
             "FD"
         );
 
         setFill(COLORS.navy);
         pdf.roundedRect(
-            leftX+1.4*scale,
-            cupTop+1.1*scale,
-            3.1*scale,
-            cupHeight-2.2*scale,
-            1.1*scale,
-            1.1*scale,
+            leftCupX+1.2*scale,
+            cupTop+1.35*scale,
+            cupInnerW,
+            cupInnerH,
+            1*scale,
+            1*scale,
             "F"
         );
-
         pdf.roundedRect(
-            rightX-4.5*scale,
-            cupTop+1.1*scale,
-            3.1*scale,
-            cupHeight-2.2*scale,
-            1.1*scale,
-            1.1*scale,
+            rightCupX+1.1*scale,
+            cupTop+1.35*scale,
+            cupInnerW,
+            cupInnerH,
+            1*scale,
+            1*scale,
             "F"
         );
     }
@@ -1077,13 +1095,13 @@ function downloadAllQrCodes(){
         drawHeadphones(
             pos,
             centerX,
-            pos.y+12,
-            .92
+            pos.y+10.5,
+            .82
         );
 
         const qrSize=29;
         const qrX=centerX-qrSize/2;
-        const qrY=pos.y+22;
+        const qrY=pos.y+21.5;
 
         setFill([255,255,255]);
         pdf.roundedRect(
@@ -1167,8 +1185,8 @@ function downloadAllQrCodes(){
         drawHeadphones(
             pos,
             centerX,
-            pos.y+9.2,
-            .72
+            pos.y+7.8,
+            .70
         );
 
         pdf.setTextColor(45,45,45);
@@ -1177,12 +1195,12 @@ function downloadAllQrCodes(){
         pdf.text(
             String(card.Jahr||""),
             centerX,
-            pos.y+29.2,
+            pos.y+30.5,
             {align:"center"}
         );
         pdf.setTextColor(0,0,0);
 
-        let y=pos.y+35;
+        let y=pos.y+36.5;
 
         y=drawLabelRow(
             pos,
