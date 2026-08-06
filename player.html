@@ -61,6 +61,14 @@
       line-height: 1.12;
     }
 
+    .header-version {
+      margin-top: 5px;
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      opacity: 0.88;
+    }
+
     main {
       width: min(760px, calc(100% - 18px));
       margin: 10px auto 24px;
@@ -155,6 +163,17 @@
       border-radius: 14px;
     }
 
+    #torchButton {
+      color: #5a4300;
+      background: #fff3a6;
+      border: 1px solid #f2d34f;
+      font-size: 24px;
+    }
+
+    #cameraChoiceButton {
+      font-size: 28px;
+    }
+
     .camera-choice {
       margin-top: 12px;
       padding: 10px 12px;
@@ -173,7 +192,7 @@
 
     .camera-choice select {
       width: 100%;
-      min-height: 42px;
+      min-height: 23px;
       padding: 8px 10px;
       border: 1px solid var(--border);
       border-radius: 9px;
@@ -185,18 +204,13 @@
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 7px;
-      margin-bottom: 10px;
-      padding: 8px 10px 10px;
+      gap: 4px;
+      margin-bottom: 8px;
+      padding: 6px 10px 7px;
       border: 1px solid var(--border);
       border-radius: 18px;
       background:
         linear-gradient(180deg, rgba(255,255,255,0.96) 0%, rgba(247,248,255,0.96) 100%);
-    }
-
-    .brand-headphones {
-      font-size: 48px;
-      line-height: 1;
     }
 
     .brand-wave {
@@ -204,26 +218,26 @@
       align-items: end;
       justify-content: center;
       gap: 7px;
-      min-height: 48px;
+      min-height: 34px;
     }
 
     .brand-wave span {
       display: block;
-      width: 10px;
+      width: 8px;
       border-radius: 999px;
     }
 
-    .brand-wave span:nth-child(1) { height: 18px; background: var(--blue); }
-    .brand-wave span:nth-child(2) { height: 29px; background: #18a8dd; }
-    .brand-wave span:nth-child(3) { height: 42px; background: #34c8b1; }
-    .brand-wave span:nth-child(4) { height: 23px; background: #a5c94a; }
-    .brand-wave span:nth-child(5) { height: 35px; background: #f0c41b; }
-    .brand-wave span:nth-child(6) { height: 48px; background: #ffb10a; }
-    .brand-wave span:nth-child(7) { height: 35px; background: #ff7f1b; }
-    .brand-wave span:nth-child(8) { height: 23px; background: #ff5d4c; }
-    .brand-wave span:nth-child(9) { height: 42px; background: #ef2d95; }
-    .brand-wave span:nth-child(10){ height: 31px; background: #c72c9a; }
-    .brand-wave span:nth-child(11){ height: 20px; background: #7b28b3; }
+    .brand-wave span:nth-child(1) { height: 13px; background: var(--blue); }
+    .brand-wave span:nth-child(2) { height: 21px; background: #18a8dd; }
+    .brand-wave span:nth-child(3) { height: 23px; background: #34c8b1; }
+    .brand-wave span:nth-child(4) { height: 17px; background: #a5c94a; }
+    .brand-wave span:nth-child(5) { height: 26px; background: #f0c41b; }
+    .brand-wave span:nth-child(6) { height: 36px; background: #ffb10a; }
+    .brand-wave span:nth-child(7) { height: 26px; background: #ff7f1b; }
+    .brand-wave span:nth-child(8) { height: 17px; background: #ff5d4c; }
+    .brand-wave span:nth-child(9) { height: 23px; background: #ef2d95; }
+    .brand-wave span:nth-child(10){ height: 23px; background: #c72c9a; }
+    .brand-wave span:nth-child(11){ height: 15px; background: #7b28b3; }
 
     .camera-frame {
       position: relative;
@@ -245,20 +259,20 @@
       content: "";
       position: absolute;
       top: 50%;
-      width: 18px;
-      height: 58px;
-      margin-top: -29px;
-      border-radius: 12px;
+      width: 24px;
+      height: 92px;
+      margin-top: -46px;
+      border-radius: 16px;
       opacity: 0.95;
       background: linear-gradient(180deg, var(--blue), var(--cyan));
     }
 
     .camera-frame::before {
-      left: -9px;
+      left: -12px;
     }
 
     .camera-frame::after {
-      right: -9px;
+      right: -12px;
       background: linear-gradient(180deg, var(--pink), var(--purple));
     }
 
@@ -279,7 +293,7 @@
     }
 
     #status {
-      min-height: 48px;
+      min-height: 34px;
       padding: 11px 13px;
       border-left: 6px solid var(--blue);
       border-radius: 10px;
@@ -314,6 +328,14 @@
       display: block;
       border: 2px solid var(--purple);
       background: linear-gradient(180deg, #ffffff 0%, #fbf7ff 100%);
+    }
+
+    .player-card-id {
+      margin: -4px 0 12px;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.02em;
     }
 
     .player-main-button {
@@ -407,7 +429,8 @@
 
 <body>
   <header>
-    <h1 id="headerTitle">HH Musikquiz Player</h1>
+    <h1>HH Musikquiz Player</h1>
+    <div id="headerVersion" class="header-version">Version 18</div>
   </header>
 
   <main>
@@ -445,8 +468,6 @@
       </div>
 
       <div class="brand-hero">
-        <div class="brand-headphones">&#127911;</div>
-
         <div class="brand-wave" aria-hidden="true">
           <span></span><span></span><span></span><span></span><span></span><span></span>
           <span></span><span></span><span></span><span></span><span></span>
@@ -466,6 +487,8 @@
 
     <section id="playerBox" class="panel player-box">
       <h2>H&ouml;rprobe</h2>
+
+      <div id="playerCardId" class="player-card-id"></div>
 
       <audio id="audioPlayer" playsinline preload="none"></audio>
 
@@ -697,19 +720,19 @@
   </main>
 
   <footer>
-    HH Musikquiz &middot; Impressum und Datenschutz befinden sich am Seitenende.
+    HH Musikquiz
   </footer>
 
   <script>
     "use strict";
 
-    const PLAYER_VERSION = 17;
+    const PLAYER_VERSION = 19;
     const QR_FORMAT_VERSION = 1;
     const SEARCH_LIMIT = 25;
     const REQUEST_TIMEOUT_MS = 15000;
     const MIN_ACCEPTABLE_SCORE = 52;
 
-    const headerTitle = document.getElementById("headerTitle");
+    const headerVersion = document.getElementById("headerVersion");
     const cameraPanel = document.getElementById("cameraPanel");
     const startButton = document.getElementById("startButton");
     const torchButton = document.getElementById("torchButton");
@@ -725,10 +748,11 @@
     const statusPanel = document.getElementById("statusPanel");
     const statusElement = document.getElementById("status");
     const cardIdElement = document.getElementById("cardId");
+    const playerCardId = document.getElementById("playerCardId");
     const playerBox = document.getElementById("playerBox");
     const audioPlayer = document.getElementById("audioPlayer");
 
-    headerTitle.textContent = `HH Musikquiz Player - Version ${PLAYER_VERSION}`;
+    headerVersion.textContent = `Version ${PLAYER_VERSION}`;
 
     let qrScanner = null;
     let scannerRunning = false;
@@ -999,6 +1023,7 @@
     async function processCard(card) {
       currentCard = card;
       cardIdElement.textContent = `Karten-ID: ${card.id}`;
+      playerCardId.textContent = `Karten-ID: ${card.id}`;
 
       setStatus("QR-Code g\u00fcltig. Deezer wird nach der aktuellen H\u00f6rprobe durchsucht.");
 
@@ -1085,6 +1110,7 @@
       discardPreview(false);
       currentCard = null;
       cardIdElement.textContent = "";
+      playerCardId.textContent = "";
       playerBox.classList.remove("visible");
       newCardButton.disabled = true;
       scanLocked = false;
@@ -1299,6 +1325,7 @@
       discardPreview(false);
       currentCard = null;
       cardIdElement.textContent = "";
+      playerCardId.textContent = "";
       playerBox.classList.remove("visible");
       cameraPanel.classList.remove("compact");
       newCardButton.disabled = true;
