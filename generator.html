@@ -277,7 +277,7 @@ details summary{
 <script>
 "use strict";
 
-const APP_VERSION = 32;
+const APP_VERSION = 33;
 const ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
 const SEARCH_LIMIT = 25;
 const REQUEST_TIMEOUT_MS = 15000;
@@ -906,166 +906,90 @@ function downloadAllQrCodes(){
         const archHeight=14*scale;
         const baseY=topY+archHeight;
 
-        const cupWidth=7.2*scale;
-        const cupHeight=16.2*scale;
-        const cupTop=baseY-1.8*scale;
+        const cupOuterW=8.6*scale;
+        const cupOuterH=18.4*scale;
+        const cupInnerW=5.2*scale;
+        const cupInnerH=14.2*scale;
 
-        const leftCupX=centerX-halfWidth-4.6*scale;
-        const rightCupX=centerX+halfWidth-2.6*scale;
+        const leftCupX=centerX-halfWidth-5.6*scale;
+        const rightCupX=centerX+halfWidth-3*scale;
+        const cupTop=baseY-2.1*scale;
 
-        /*
-         * Durchgehender Kopfhörerbügel von links nach rechts.
-         * Ein einziger Bézierbogen verhindert die getrennten Schlangenlinien.
-         */
         setDraw(COLORS.navy);
-        pdf.setLineWidth(2.35*scale);
+        pdf.setLineWidth(2.5*scale);
         pdf.lines(
-            [
-                [
-                    halfWidth*.42,
-                    -archHeight*1.12,
-                    halfWidth*1.58,
-                    -archHeight*1.12,
-                    halfWidth*2,
-                    0
-                ]
-            ],
-            centerX-halfWidth,
-            baseY,
-            [1,1],
-            "S",
-            false
+            [[
+                halfWidth*.42,-archHeight*1.15,
+                halfWidth*1.58,-archHeight*1.15,
+                halfWidth*2,0
+            ]],
+            centerX-halfWidth, baseY, [1,1], "S", false
         );
 
-        /*
-         * Innerer Bügel für die plastischere Form.
-         */
         setDraw(COLORS.blue);
-        pdf.setLineWidth(.7*scale);
+        pdf.setLineWidth(.8*scale);
         pdf.lines(
-            [
-                [
-                    halfWidth*.44,
-                    -archHeight*.96,
-                    halfWidth*1.56,
-                    -archHeight*.96,
-                    halfWidth*2,
-                    0
-                ]
-            ],
-            centerX-halfWidth,
-            baseY+.8*scale,
-            [1,1],
-            "S",
-            false
+            [[
+                halfWidth*.44,-archHeight*.97,
+                halfWidth*1.56,-archHeight*.97,
+                halfWidth*2,0
+            ]],
+            centerX-halfWidth, baseY+.85*scale, [1,1], "S", false
         );
 
-        /*
-         * Farbige Außenakzente wie in der Vorlage.
-         */
         setDraw(COLORS.cyan);
-        pdf.setLineWidth(.75*scale);
+        pdf.setLineWidth(.85*scale);
         pdf.lines(
-            [
-                [
-                    halfWidth*.18,
-                    -archHeight*.72,
-                    halfWidth*.68,
-                    -archHeight,
-                    halfWidth,
-                    -archHeight
-                ]
-            ],
-            centerX-halfWidth-.2*scale,
-            baseY-.2*scale,
-            [1,1],
-            "S",
-            false
+            [[halfWidth*.18,-archHeight*.76,halfWidth*.68,-archHeight,halfWidth,-archHeight]],
+            centerX-halfWidth-.2*scale, baseY-.2*scale, [1,1], "S", false
         );
 
         setDraw(COLORS.magenta);
         pdf.lines(
-            [
-                [
-                    halfWidth*.32,
-                    0,
-                    halfWidth*.82,
-                    archHeight*.72,
-                    halfWidth,
-                    archHeight
-                ]
-            ],
-            centerX,
-            baseY-archHeight-.2*scale,
-            [1,1],
-            "S",
-            false
+            [[halfWidth*.32,0,halfWidth*.82,archHeight*.74,halfWidth,archHeight]],
+            centerX, baseY-archHeight-.25*scale, [1,1], "S", false
         );
 
-        /*
-         * Kurze Halterungen zwischen Bügel und Ohrmuscheln.
-         */
         setDraw(COLORS.navy);
-        pdf.setLineWidth(1.2*scale);
-        pdf.line(
-            centerX-halfWidth+.6*scale,
-            baseY-.4*scale,
-            leftCupX+cupWidth-1*scale,
-            cupTop+2.2*scale
-        );
-        pdf.line(
-            centerX+halfWidth-.6*scale,
-            baseY-.4*scale,
-            rightCupX+1*scale,
-            cupTop+2.2*scale
-        );
+        pdf.setLineWidth(1.15*scale);
+        pdf.line(centerX-halfWidth+.7*scale, baseY-.4*scale, leftCupX+cupOuterW-1.5*scale, cupTop+2.7*scale);
+        pdf.line(centerX+halfWidth-.7*scale, baseY-.4*scale, rightCupX+1.5*scale, cupTop+2.7*scale);
 
-        /*
-         * Große, klar erkennbare Ohrmuscheln.
-         */
+        // Outer rounded ear cups
         setFill(COLORS.cyan);
         setDraw(COLORS.blue);
-        pdf.setLineWidth(.4);
-        pdf.roundedRect(
-            leftCupX,
-            cupTop,
-            cupWidth,
-            cupHeight,
-            2*scale,
-            2*scale,
-            "FD"
-        );
+        pdf.setLineWidth(.4*scale);
+        pdf.roundedRect(leftCupX, cupTop, cupOuterW, cupOuterH, 2.8*scale, 2.8*scale, "FD");
 
         setFill(COLORS.magenta);
         setDraw(COLORS.purple);
-        pdf.roundedRect(
-            rightCupX,
-            cupTop,
-            cupWidth,
-            cupHeight,
-            2*scale,
-            2*scale,
-            "FD"
-        );
+        pdf.roundedRect(rightCupX, cupTop, cupOuterW, cupOuterH, 2.8*scale, 2.8*scale, "FD");
 
+        // Middle accent stripe
+        setDraw(255,255,255);
+        pdf.setLineWidth(.55*scale);
+        pdf.line(leftCupX+1.7*scale, cupTop+1.4*scale, leftCupX+1.7*scale, cupTop+cupOuterH-1.4*scale);
+        pdf.line(rightCupX+cupOuterW-1.7*scale, cupTop+1.4*scale, rightCupX+cupOuterW-1.7*scale, cupTop+cupOuterH-1.4*scale);
+
+        // Inner cushion
         setFill(COLORS.navy);
         pdf.roundedRect(
-            leftCupX+1.55*scale,
-            cupTop+1.25*scale,
-            3.4*scale,
-            cupHeight-2.5*scale,
-            1.1*scale,
-            1.1*scale,
+            leftCupX+2.3*scale,
+            cupTop+2.0*scale,
+            cupInnerW,
+            cupInnerH,
+            1.6*scale,
+            1.6*scale,
             "F"
         );
 
         pdf.roundedRect(
-            rightCupX+2.25*scale,
-            cupTop+1.25*scale,
-            3.4*scale,
-            cupHeight-2.5*scale,
-            1.1*scale,
-            1.1*scale,
+            rightCupX+1.1*scale,
+            cupTop+2.0*scale,
+            cupInnerW,
+            cupInnerH,
+            1.6*scale,
+            1.6*scale,
             "F"
         );
     }
