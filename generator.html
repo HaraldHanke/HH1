@@ -277,7 +277,7 @@ details summary{
 <script>
 "use strict";
 
-const APP_VERSION = 29;
+const APP_VERSION = 30;
 const ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
 const SEARCH_LIMIT = 25;
 const REQUEST_TIMEOUT_MS = 15000;
@@ -1080,292 +1080,164 @@ function downloadAllQrCodes(){
         pdf.setTextColor(0,0,0);
     }
 
-    function drawFrontCard(pos,item){
-        drawColorBorder(pos);
-
-        const centerX=pos.x+cardWidth/2;
-
-        drawWaveform(
+    
+    
+    function drawHeadphoneReferenceFront(centerX,topY){
+        const y = topY;
+        setDraw(COLORS.navy);
+        pdf.setLineWidth(1.55);
+        pdf.lines(
+            [[[5,-9],[17,-9],[24,0]]],
+            centerX-24,
+            y+18,
+            [1,1],
+            "S",
+            false
+        );
+        pdf.lines(
+            [[[5,9],[17,9],[24,0]]],
             centerX,
-            pos.y+8.5,
-            31,
-            5.5
+            y,
+            [1,1],
+            "S",
+            false
         );
 
-        drawHeadphones(
-            pos,
+        setFill(COLORS.cyan); setDraw(COLORS.blue);
+        pdf.roundedRect(centerX-28.2,y+10.7,4.2,10.2,1.1,1.1,"FD");
+        setFill(COLORS.magenta); setDraw(COLORS.purple);
+        pdf.roundedRect(centerX+24.0,y+10.7,4.2,10.2,1.1,1.1,"FD");
+
+        setFill(COLORS.navy);
+        pdf.roundedRect(centerX-27.1,y+11.8,2.25,8.0,0.7,0.7,"F");
+        pdf.roundedRect(centerX+25.0,y+11.8,2.25,8.0,0.7,0.7,"F");
+    }
+
+    function drawHeadphoneReferenceBack(centerX,topY){
+        const y = topY;
+        setDraw(COLORS.navy);
+        pdf.setLineWidth(1.55);
+        pdf.lines(
+            [[[6,-12],[19,-12],[27,0]]],
+            centerX-27,
+            y+21,
+            [1,1],
+            "S",
+            false
+        );
+        pdf.lines(
+            [[[6,12],[19,12],[27,0]]],
             centerX,
-            pos.y+10.5,
-            .82
+            y,
+            [1,1],
+            "S",
+            false
         );
 
-        const qrSize=29;
+        setFill(COLORS.cyan); setDraw(COLORS.blue);
+        pdf.roundedRect(centerX-31.5,y+12.6,4.9,12.4,1.2,1.2,"FD");
+        setFill(COLORS.magenta); setDraw(COLORS.purple);
+        pdf.roundedRect(centerX+26.6,y+12.6,4.9,12.4,1.2,1.2,"FD");
+
+        setFill(COLORS.navy);
+        pdf.roundedRect(centerX-30.2,y+13.9,2.5,9.5,0.8,0.8,"F");
+        pdf.roundedRect(centerX+27.9,y+13.9,2.5,9.5,0.8,0.8,"F");
+    }
+
+function drawFrontCard(card,index){
+        const pos=getCardPos(index,false);
+        const centerX=pos.x+cardW/2;
+
+        drawCardFrame(pos);
+
+        const barsY=pos.y+5.5;
+        drawEqualizer(centerX,barsY,.88);
+
+        const archTopY=pos.y+8.2;
+        drawHeadphoneReferenceFront(centerX,archTopY);
+
+        const qrCanvas=qrCanvasMap.get(card.ID);
+        const qrImg=qrCanvas.toDataURL("image/png");
+        const qrSize=23.5;
         const qrX=centerX-qrSize/2;
-        const qrY=pos.y+21.5;
+        const qrY=pos.y+18.5;
 
-        setFill([255,255,255]);
-        pdf.roundedRect(
-            qrX-1.3,
-            qrY-1.3,
-            qrSize+2.6,
-            qrSize+2.6,
-            1.6,
-            1.6,
-            "F"
+        pdf.addImage(qrImg,"PNG",qrX,qrY,qrSize,qrSize);
+
+        drawIdPill(
+            centerX-18.5,
+            pos.y+cardH-8.8,
+            37,
+            5.4,
+            card.ID || ""
         );
-
-        pdf.addImage(
-            item.canvas.toDataURL("image/png"),
-            "PNG",
-            qrX,
-            qrY,
-            qrSize,
-            qrSize
-        );
-
-        drawIdPill(pos,item.card.ID);
     }
 
-    function drawLabelRow(pos,label,value,y,options={}){
-        const labelX=pos.x+8;
-        const dividerX=pos.x+22.5;
-        const valueX=pos.x+25;
-        const valueWidth=cardWidth-30;
-        const fontSize=options.fontSize??7;
-        const lineHeight=options.lineHeight??2.8;
-        const maxLines=options.maxLines??1;
 
-        setText(COLORS.green);
+    function drawBackCard(card,index){
+        const pos=getCardPos(index,true);
+        const centerX=pos.x+cardW/2;
+
+        drawCardFrame(pos);
+
+        const barsY=pos.y+5.3;
+        drawEqualizer(centerX,barsY,.86);
+
+        drawHeadphoneReferenceBack(centerX,pos.y+7.3);
+
+        pdf.setTextColor(55,55,55);
         pdf.setFont("helvetica","bold");
-        pdf.setFontSize(6.2);
-        pdf.text(label,labelX,y);
-
-        setDraw(COLORS.green);
-        pdf.setLineWidth(.35);
-        pdf.line(dividerX,y-2.5,dividerX,y+1.2);
-
-        pdf.setTextColor(0,0,0);
-        pdf.setFont(
-            "helvetica",
-            options.bold?"bold":"normal"
-        );
-        pdf.setFontSize(fontSize);
-
-        const lines=pdf
-            .splitTextToSize(String(value||""),valueWidth)
-            .slice(0,maxLines);
-
-        pdf.text(lines,valueX,y);
-
-        setDraw([160,185,168]);
-        pdf.setLineWidth(.2);
-        const ruleY=y+(lines.length-1)*lineHeight+1.7;
-        pdf.line(
-            pos.x+8,
-            ruleY,
-            pos.x+cardWidth-8,
-            ruleY
-        );
-
-        return ruleY+3.3;
-    }
-
-    function drawBackCard(pos,card){
-        drawColorBorder(pos);
-
-        const centerX=pos.x+cardWidth/2;
-
-        drawWaveform(
-            centerX,
-            pos.y+6.8,
-            29,
-            4.4
-        );
-
-        drawHeadphones(
-            pos,
-            centerX,
-            pos.y+7.8,
-            .70
-        );
-
-        pdf.setTextColor(45,45,45);
-        pdf.setFont("helvetica","bold");
-        pdf.setFontSize(22);
+        pdf.setFontSize(23);
         pdf.text(
             String(card.Jahr||""),
             centerX,
-            pos.y+30.5,
+            pos.y+21.5,
             {align:"center"}
         );
         pdf.setTextColor(0,0,0);
 
-        let y=pos.y+36.5;
+        const labelX=pos.x+5.6;
+        const valueX=pos.x+20.5;
+        const topLineY=pos.y+27.5;
+        const rowGap=5.2;
 
-        y=drawLabelRow(
-            pos,
-            "FILM",
-            card.Film,
-            y,
-            {fontSize:7.8,bold:true,maxLines:1}
-        );
+        const rows=[
+            ["FILM", String(card.Film||"")],
+            ["INTERPRET", String(card.Interpret||"")],
+            ["TITEL", String(card.Titel||"")],
+            ["VERSION", String(card.Version||"")],
+            ["INFO", String(card.Info||"")]
+        ];
 
-        y=drawLabelRow(
-            pos,
-            "INTERPRET",
-            card.Interpret,
-            y,
-            {fontSize:7,maxLines:1}
-        );
+        pdf.setDrawColor(130,175,145);
 
-        y=drawLabelRow(
-            pos,
-            "TITEL",
-            card.Titel,
-            y,
-            {fontSize:7.2,bold:true,maxLines:1}
-        );
+        rows.forEach((row,idx)=>{
+            const y=topLineY + idx*rowGap;
+            pdf.setLineWidth(0.2);
+            pdf.line(pos.x+5.2,y,pos.x+cardW-5.2,y);
 
-        if(String(card.Version||"").trim()){
-            y=drawLabelRow(
-                pos,
-                "VERSION",
-                card.Version,
-                y,
-                {fontSize:6.8,maxLines:1}
-            );
-        }
+            pdf.setFont("helvetica","bold");
+            pdf.setFontSize(4.6);
+            pdf.setTextColor(44,130,79);
+            pdf.text(row[0],labelX,y-1.2);
 
-        const remainingHeight=pos.y+56-y;
-        const infoLines=Math.max(
-            1,
-            Math.min(2,Math.floor(remainingHeight/2.8))
-        );
+            pdf.setTextColor(0,0,0);
+            pdf.setFont(row[0]==="FILM" ? "helvetica" : "helvetica", row[0]==="FILM" ? "bold" : "normal");
+            pdf.setFontSize(row[0]==="FILM" ? 7.8 : 5.7);
 
-        drawLabelRow(
-            pos,
-            "INFO",
-            card.Info,
-            y,
-            {fontSize:6.1,lineHeight:2.5,maxLines:infoLines}
-        );
-
-        drawIdPill(pos,card.ID);
-    }
-
-    function addFooter(page,total,side){
-        pdf.setFontSize(7);
-        pdf.setTextColor(0,0,0);
-        pdf.text(
-            `HH Musikquiz – Version ${APP_VERSION} – ${side}`,
-            10,
-            pageHeight-5
-        );
-        pdf.text(
-            `Seite ${page}/${total}`,
-            pageWidth-10,
-            pageHeight-5,
-            {align:"right"}
-        );
-    }
-
-    const totalPages=sheetCount*2;
-    let currentPage=0;
-
-    for(let sheet=0;sheet<sheetCount;sheet++){
-        if(currentPage>0){
-            pdf.addPage();
-        }
-
-        currentPage++;
-        drawCutMarks();
-
-        const start=sheet*cardsPerSheet;
-        const end=Math.min(
-            start+cardsPerSheet,
-            printCards.length
-        );
-
-        for(let index=start;index<end;index++){
-            const item=printCards[index];
-            const pos=getCardPosition(index,false);
-            drawFrontCard(pos,item);
-        }
-
-        addFooter(
-            currentPage,
-            totalPages,
-            "Vorderseiten"
-        );
-
-        pdf.addPage();
-        currentPage++;
-        drawCutMarks();
-
-        for(let index=start;index<end;index++){
-            const card=printCards[index].card;
-            const pos=getCardPosition(index,true);
-            drawBackCard(pos,card);
-        }
-
-        addFooter(
-            currentPage,
-            totalPages,
-            "Rückseiten"
-        );
-    }
-
-    pdf.save("HH-Musikquiz-Duplex-Karten.pdf");
-
-    statusText.textContent=
-        `PDF mit ${printCards.length} geprüften Karten und ${totalPages} Seiten wurde erstellt.`;
-}
-
-csvInput.addEventListener("change",()=>{
-    if(!csvInput.files.length)return;
-    if(typeof Papa==="undefined"){statusText.textContent="Fehler: CSV-Bibliothek fehlt.";return}
-    if(typeof QRious==="undefined"){statusText.textContent="Fehler: QR-Code-Bibliothek fehlt.";return}
-    const selectedFile=csvInput.files[0];
-    fileName.textContent=selectedFile.name;
-    statusText.textContent="CSV wird eingelesen …";
-    const reader=new FileReader();
-
-    reader.onload=async()=>{
-        const result=Papa.parse(reader.result,{header:true,skipEmptyLines:true,transformHeader:h=>h.trim()});
-        data=result.data;
-        let missingIds=0,validationErrors=0;
-        const existingIds=new Set();
-
-        data.forEach(row=>{
-            if(row.ID&&row.ID.trim()){
-                const currentId=row.ID.trim();
-                if(existingIds.has(currentId)){validationErrors++;row.ID=createId(existingIds);missingIds++}
-                else{row.ID=currentId;existingIds.add(currentId)}
-            }else{row.ID=createId(existingIds);missingIds++}
-            if(!String(row.Film||"").trim())validationErrors++;
-            if(!String(row.Interpret||"").trim())validationErrors++;
-            if(!String(row.Titel||"").trim())validationErrors++;
-            if(!/^\d{4}$/.test(String(row.Jahr||"").trim()))validationErrors++;
+            const maxWidth=pos.x+cardW-6.0-valueX;
+            const lines=pdf.splitTextToSize(row[1] || "", maxWidth);
+            const clipped=lines.slice(0, row[0]==="INFO" ? 2 : 1);
+            pdf.text(clipped, valueX, y-1.15);
         });
 
-        cardsCount.textContent=data.length;
-        missingCount.textContent=missingIds;
-        errorsCount.textContent=validationErrors+result.errors.length;
-        resetPreviewCheck();
-        statusText.textContent="QR-Codes werden erzeugt …";
-        await showTable(data);
-        statusText.textContent="CSV und QR-Codes erfolgreich erzeugt. Jetzt Deezer-Hörproben prüfen.";
-    };
-    reader.onerror=()=>statusText.textContent="Fehler beim Lesen der CSV-Datei.";
-    reader.readAsText(selectedFile,"UTF-8");
-});
+        drawIdPill(
+            centerX-18.5,
+            pos.y+cardH-8.8,
+            37,
+            5.4,
+            card.ID || ""
+        );
+    }
 
-searchInput.addEventListener("input",()=>{
-    const term=searchInput.value.trim().toLowerCase(),rows=table.getElementsByTagName("tr");
-    for(let i=1;i<rows.length;i++)rows[i].style.display=rows[i].innerText.toLowerCase().includes(term)?"":"none";
-});
-checkPreviewsButton.addEventListener("click",checkAllPreviews);
-downloadQrButton.addEventListener("click",downloadAllQrCodes);
-</script>
-</body>
-</html>
+
