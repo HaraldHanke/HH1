@@ -291,7 +291,7 @@ PDF nur mit Rückseiten erstellen
 <script>
 "use strict";
 
-const APP_VERSION = 34;
+const APP_VERSION = 35;
 const ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
 const SEARCH_LIMIT = 25;
 const REQUEST_TIMEOUT_MS = 15000;
@@ -736,6 +736,7 @@ async function checkAllPreviews(){
 }
 
 function downloadAllQrCodes(mode="duplex"){
+    try{
     if(!previewCheckComplete){
         statusText.textContent="Bitte zuerst alle Deezer-Hörproben online prüfen.";
         return;
@@ -987,7 +988,7 @@ function downloadAllQrCodes(mode="duplex"){
         pdf.roundedRect(rightCupX, cupTop, cupOuterW, cupOuterH, 2.8*scale, 2.8*scale, "FD");
 
         // Middle accent stripe
-        setDraw(255,255,255);
+        setDraw([255,255,255]);
         pdf.setLineWidth(.55*scale);
         pdf.line(leftCupX+1.7*scale, cupTop+1.4*scale, leftCupX+1.7*scale, cupTop+cupOuterH-1.4*scale);
         pdf.line(rightCupX+cupOuterW-1.7*scale, cupTop+1.4*scale, rightCupX+cupOuterW-1.7*scale, cupTop+cupOuterH-1.4*scale);
@@ -1312,7 +1313,12 @@ function downloadAllQrCodes(mode="duplex"){
 
     statusText.textContent=
         `${outputLabel} mit ${printCards.length} geprüften Karten und ${totalPages} Seiten wurde erstellt.`;
+    }catch(error){
+        console.error(error);
 
+        statusText.textContent=
+            `PDF konnte nicht erstellt werden: ${error?.message || "Unbekannter Fehler"}`;
+    }
 }
 
 csvInput.addEventListener("change",()=>{
