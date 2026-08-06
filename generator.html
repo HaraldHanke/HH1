@@ -277,7 +277,7 @@ details summary{
 <script>
 "use strict";
 
-const APP_VERSION = 27;
+const APP_VERSION = 28;
 const ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
 const SEARCH_LIMIT = 25;
 const REQUEST_TIMEOUT_MS = 15000;
@@ -901,65 +901,136 @@ function downloadAllQrCodes(){
         pdf.setLineCap("butt");
     }
 
-    function drawHeadphones(pos,centerX,centerY,scale){
-        const rx=22*scale;
-        const ry=19*scale;
+    function drawHeadphones(pos,centerX,topY,scale){
+        const halfWidth=22*scale;
+        const archHeight=17*scale;
+        const cupTop=topY+archHeight-1.2*scale;
+        const cupWidth=7.2*scale;
+        const cupHeight=16.5*scale;
 
+        const leftX=centerX-halfWidth;
+        const rightX=centerX+halfWidth;
+
+        /*
+         * Offener Kopfhörerbügel aus zwei Bézierkurven.
+         * Dadurch entsteht kein vollständiger Kreis mehr.
+         */
         setDraw(COLORS.navy);
-        pdf.setLineWidth(2.4*scale);
-        pdf.ellipse(centerX,centerY,rx,ry,"S");
+        pdf.setLineWidth(2.35*scale);
+        pdf.lines(
+            [
+                [
+                    halfWidth*.18,
+                    -archHeight*.92,
+                    halfWidth*.72,
+                    -archHeight*.92,
+                    halfWidth,
+                    0
+                ],
+                [
+                    halfWidth*.28,
+                    archHeight*.92,
+                    halfWidth*.82,
+                    archHeight*.92,
+                    halfWidth,
+                    0
+                ]
+            ],
+            leftX,
+            cupTop,
+            [1,1],
+            "S",
+            false
+        );
 
+        /*
+         * Farbiger äußerer Akzent auf dem Bügel.
+         */
         setDraw(COLORS.cyan);
-        pdf.setLineWidth(.7*scale);
-        pdf.ellipse(centerX-.8*scale,centerY-.4*scale,rx,ry,"S");
+        pdf.setLineWidth(.65*scale);
+        pdf.lines(
+            [
+                [
+                    halfWidth*.18,
+                    -archHeight*.92,
+                    halfWidth*.72,
+                    -archHeight*.92,
+                    halfWidth,
+                    0
+                ]
+            ],
+            leftX-.45*scale,
+            cupTop-.35*scale,
+            [1,1],
+            "S",
+            false
+        );
 
-        const earWidth=8*scale;
-        const earHeight=20*scale;
-        const earY=centerY+2*scale;
+        setDraw(COLORS.magenta);
+        pdf.lines(
+            [
+                [
+                    halfWidth*.28,
+                    archHeight*.92,
+                    halfWidth*.82,
+                    archHeight*.92,
+                    halfWidth,
+                    0
+                ]
+            ],
+            centerX-.05*scale,
+            topY+.2*scale,
+            [1,1],
+            "S",
+            false
+        );
 
+        /*
+         * Ohrmuscheln liegen seitlich außerhalb des Inhaltsbereichs.
+         */
         setFill(COLORS.cyan);
         setDraw(COLORS.blue);
         pdf.setLineWidth(.45);
         pdf.roundedRect(
-            centerX-rx-2.5*scale,
-            earY,
-            earWidth,
-            earHeight,
-            2.2*scale,
-            2.2*scale,
+            leftX-2.6*scale,
+            cupTop,
+            cupWidth,
+            cupHeight,
+            2*scale,
+            2*scale,
             "FD"
         );
 
         setFill(COLORS.magenta);
         setDraw(COLORS.purple);
         pdf.roundedRect(
-            centerX+rx-earWidth+2.5*scale,
-            earY,
-            earWidth,
-            earHeight,
-            2.2*scale,
-            2.2*scale,
+            rightX-cupWidth+2.6*scale,
+            cupTop,
+            cupWidth,
+            cupHeight,
+            2*scale,
+            2*scale,
             "FD"
         );
 
         setFill(COLORS.navy);
         pdf.roundedRect(
-            centerX-rx+3.2*scale,
-            earY+1.2*scale,
-            3.5*scale,
-            earHeight-2.4*scale,
-            1.2*scale,
-            1.2*scale,
+            leftX+1.4*scale,
+            cupTop+1.1*scale,
+            3.1*scale,
+            cupHeight-2.2*scale,
+            1.1*scale,
+            1.1*scale,
             "F"
         );
 
         pdf.roundedRect(
-            centerX+rx-6.7*scale,
-            earY+1.2*scale,
-            3.5*scale,
-            earHeight-2.4*scale,
-            1.2*scale,
-            1.2*scale,
+            rightX-4.5*scale,
+            cupTop+1.1*scale,
+            3.1*scale,
+            cupHeight-2.2*scale,
+            1.1*scale,
+            1.1*scale,
             "F"
         );
     }
@@ -1006,13 +1077,13 @@ function downloadAllQrCodes(){
         drawHeadphones(
             pos,
             centerX,
-            pos.y+29,
+            pos.y+12,
             .92
         );
 
-        const qrSize=34;
+        const qrSize=29;
         const qrX=centerX-qrSize/2;
-        const qrY=pos.y+18;
+        const qrY=pos.y+22;
 
         setFill([255,255,255]);
         pdf.roundedRect(
@@ -1096,22 +1167,22 @@ function downloadAllQrCodes(){
         drawHeadphones(
             pos,
             centerX,
-            pos.y+18.5,
-            .57
+            pos.y+9.2,
+            .72
         );
 
         pdf.setTextColor(45,45,45);
         pdf.setFont("helvetica","bold");
-        pdf.setFontSize(23);
+        pdf.setFontSize(22);
         pdf.text(
             String(card.Jahr||""),
             centerX,
-            pos.y+24.7,
+            pos.y+29.2,
             {align:"center"}
         );
         pdf.setTextColor(0,0,0);
 
-        let y=pos.y+31.5;
+        let y=pos.y+35;
 
         y=drawLabelRow(
             pos,
