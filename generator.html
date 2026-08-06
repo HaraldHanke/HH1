@@ -277,7 +277,7 @@ details summary{
 <script>
 "use strict";
 
-const APP_VERSION = 31;
+const APP_VERSION = 32;
 const ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
 const SEARCH_LIMIT = 25;
 const REQUEST_TIMEOUT_MS = 15000;
@@ -902,76 +902,82 @@ function downloadAllQrCodes(){
     }
 
     function drawHeadphones(pos,centerX,topY,scale){
-        const archHalf=24*scale;
-        const archHeight=15*scale;
-        const cupTop=topY+archHeight-1.2*scale;
+        const halfWidth=22*scale;
+        const archHeight=14*scale;
+        const baseY=topY+archHeight;
 
-        const leftCupX=centerX-archHalf-4.8*scale;
-        const rightCupX=centerX+archHalf-2.2*scale;
+        const cupWidth=7.2*scale;
+        const cupHeight=16.2*scale;
+        const cupTop=baseY-1.8*scale;
 
-        const cupOuterW=5.6*scale;
-        const cupOuterH=14.5*scale;
-        const cupInnerW=3.3*scale;
-        const cupInnerH=11.8*scale;
+        const leftCupX=centerX-halfWidth-4.6*scale;
+        const rightCupX=centerX+halfWidth-2.6*scale;
 
         /*
-         * Klassischer Kopfhörerbügel als geschlossene, gut erkennbare Halbkurve.
+         * Durchgehender Kopfhörerbügel von links nach rechts.
+         * Ein einziger Bézierbogen verhindert die getrennten Schlangenlinien.
          */
         setDraw(COLORS.navy);
-        pdf.setLineWidth(1.9*scale);
+        pdf.setLineWidth(2.35*scale);
         pdf.lines(
             [
                 [
-                    archHalf*0.22,
-                    -archHeight*0.95,
-                    archHalf*0.78,
-                    -archHeight*0.95,
-                    archHalf,
+                    halfWidth*.42,
+                    -archHeight*1.12,
+                    halfWidth*1.58,
+                    -archHeight*1.12,
+                    halfWidth*2,
                     0
                 ]
             ],
-            centerX-archHalf,
-            topY+archHeight,
-            [1,1],
-            "S",
-            false
-        );
-        pdf.lines(
-            [
-                [
-                    archHalf*0.22,
-                    archHeight*0.95,
-                    archHalf*0.78,
-                    archHeight*0.95,
-                    archHalf,
-                    0
-                ]
-            ],
-            centerX,
-            topY,
+            centerX-halfWidth,
+            baseY,
             [1,1],
             "S",
             false
         );
 
         /*
-         * Farbiger Akzent auf dem äußeren Bügel.
+         * Innerer Bügel für die plastischere Form.
          */
-        setDraw(COLORS.cyan);
-        pdf.setLineWidth(0.55*scale);
+        setDraw(COLORS.blue);
+        pdf.setLineWidth(.7*scale);
         pdf.lines(
             [
                 [
-                    archHalf*0.22,
-                    -archHeight*0.95,
-                    archHalf*0.78,
-                    -archHeight*0.95,
-                    archHalf,
+                    halfWidth*.44,
+                    -archHeight*.96,
+                    halfWidth*1.56,
+                    -archHeight*.96,
+                    halfWidth*2,
                     0
                 ]
             ],
-            centerX-archHalf-0.35*scale,
-            topY+archHeight-0.25*scale,
+            centerX-halfWidth,
+            baseY+.8*scale,
+            [1,1],
+            "S",
+            false
+        );
+
+        /*
+         * Farbige Außenakzente wie in der Vorlage.
+         */
+        setDraw(COLORS.cyan);
+        pdf.setLineWidth(.75*scale);
+        pdf.lines(
+            [
+                [
+                    halfWidth*.18,
+                    -archHeight*.72,
+                    halfWidth*.68,
+                    -archHeight,
+                    halfWidth,
+                    -archHeight
+                ]
+            ],
+            centerX-halfWidth-.2*scale,
+            baseY-.2*scale,
             [1,1],
             "S",
             false
@@ -981,42 +987,52 @@ function downloadAllQrCodes(){
         pdf.lines(
             [
                 [
-                    archHalf*0.22,
-                    archHeight*0.95,
-                    archHalf*0.78,
-                    archHeight*0.95,
-                    archHalf,
-                    0
+                    halfWidth*.32,
+                    0,
+                    halfWidth*.82,
+                    archHeight*.72,
+                    halfWidth,
+                    archHeight
                 ]
             ],
-            centerX+0.15*scale,
-            topY+0.15*scale,
+            centerX,
+            baseY-archHeight-.2*scale,
             [1,1],
             "S",
             false
         );
 
         /*
-         * Verbindung vom Bügel zu den Ohrmuscheln.
+         * Kurze Halterungen zwischen Bügel und Ohrmuscheln.
          */
         setDraw(COLORS.navy);
-        pdf.setLineWidth(1.25*scale);
-        pdf.line(centerX-archHalf+1.1*scale, cupTop+1.2*scale, leftCupX+cupOuterW-0.6*scale, cupTop+1.8*scale);
-        pdf.line(centerX+archHalf-1.1*scale, cupTop+1.2*scale, rightCupX+0.6*scale, cupTop+1.8*scale);
+        pdf.setLineWidth(1.2*scale);
+        pdf.line(
+            centerX-halfWidth+.6*scale,
+            baseY-.4*scale,
+            leftCupX+cupWidth-1*scale,
+            cupTop+2.2*scale
+        );
+        pdf.line(
+            centerX+halfWidth-.6*scale,
+            baseY-.4*scale,
+            rightCupX+1*scale,
+            cupTop+2.2*scale
+        );
 
         /*
-         * Ohrmuscheln.
+         * Große, klar erkennbare Ohrmuscheln.
          */
         setFill(COLORS.cyan);
         setDraw(COLORS.blue);
-        pdf.setLineWidth(0.35);
+        pdf.setLineWidth(.4);
         pdf.roundedRect(
             leftCupX,
             cupTop,
-            cupOuterW,
-            cupOuterH,
-            1.7*scale,
-            1.7*scale,
+            cupWidth,
+            cupHeight,
+            2*scale,
+            2*scale,
             "FD"
         );
 
@@ -1025,30 +1041,31 @@ function downloadAllQrCodes(){
         pdf.roundedRect(
             rightCupX,
             cupTop,
-            cupOuterW,
-            cupOuterH,
-            1.7*scale,
-            1.7*scale,
+            cupWidth,
+            cupHeight,
+            2*scale,
+            2*scale,
             "FD"
         );
 
         setFill(COLORS.navy);
         pdf.roundedRect(
-            leftCupX+1.2*scale,
-            cupTop+1.35*scale,
-            cupInnerW,
-            cupInnerH,
-            1*scale,
-            1*scale,
+            leftCupX+1.55*scale,
+            cupTop+1.25*scale,
+            3.4*scale,
+            cupHeight-2.5*scale,
+            1.1*scale,
+            1.1*scale,
             "F"
         );
+
         pdf.roundedRect(
-            rightCupX+1.1*scale,
-            cupTop+1.35*scale,
-            cupInnerW,
-            cupInnerH,
-            1*scale,
-            1*scale,
+            rightCupX+2.25*scale,
+            cupTop+1.25*scale,
+            3.4*scale,
+            cupHeight-2.5*scale,
+            1.1*scale,
+            1.1*scale,
             "F"
         );
     }
@@ -1095,13 +1112,13 @@ function downloadAllQrCodes(){
         drawHeadphones(
             pos,
             centerX,
-            pos.y+10.5,
-            .82
+            pos.y+10.2,
+            .92
         );
 
-        const qrSize=29;
+        const qrSize=26.5;
         const qrX=centerX-qrSize/2;
-        const qrY=pos.y+21.5;
+        const qrY=pos.y+22.2;
 
         setFill([255,255,255]);
         pdf.roundedRect(
@@ -1185,8 +1202,8 @@ function downloadAllQrCodes(){
         drawHeadphones(
             pos,
             centerX,
-            pos.y+7.8,
-            .70
+            pos.y+7.2,
+            .82
         );
 
         pdf.setTextColor(45,45,45);
@@ -1195,12 +1212,12 @@ function downloadAllQrCodes(){
         pdf.text(
             String(card.Jahr||""),
             centerX,
-            pos.y+30.5,
+            pos.y+29.8,
             {align:"center"}
         );
         pdf.setTextColor(0,0,0);
 
-        let y=pos.y+36.5;
+        let y=pos.y+36;
 
         y=drawLabelRow(
             pos,
